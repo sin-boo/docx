@@ -38,8 +38,18 @@ NUMBERS = [
     ("1000 — One thousand","千",  "せん",         "sen",         "New counter word."),
 ]
 
-# Matching page: use 1–10 plus a few extras (keeps it on one page)
-MATCH_NUMBERS = NUMBERS[:12]   # 1–12
+# Matching page: focus on 1–20 in a compact two-column layout
+MATCH_NUMBERS = [
+    *NUMBERS[:12],  # 1–12
+    ("13 — Thirteen", "十三", "じゅうさん",   "juu-san",   ""),
+    ("14 — Fourteen", "十四", "じゅうよん",   "juu-yon",   ""),
+    ("15 — Fifteen",  "十五", "じゅうご",     "juu-go",    ""),
+    ("16 — Sixteen",  "十六", "じゅうろく",   "juu-roku",  ""),
+    ("17 — Seventeen","十七", "じゅうなな",   "juu-nana",  ""),
+    ("18 — Eighteen", "十八", "じゅうはち",   "juu-hachi", ""),
+    ("19 — Nineteen", "十九", "じゅうきゅう", "juu-kyuu",  ""),
+    NUMBERS[12],     # 20
+]
 
 
 # ── XML / formatting helpers (same as greetings file) ─────────────────────────
@@ -109,6 +119,21 @@ def divider(doc):
     bot.set(qn('w:color'), '007A87')
     pBdr.append(bot)
     pPr.append(pBdr)
+
+
+def get_matching_bank():
+    """Return a deterministic answer bank and lookup for Part 2."""
+    items = list(MATCH_NUMBERS)
+    rng = random.Random(42)
+    rng.shuffle(items)
+
+    bank = []
+    answer_lookup = {}
+    for idx, item in enumerate(items):
+        label = chr(ord('A') + idx)
+        bank.append((label, item))
+        answer_lookup[item[0]] = label
+    return bank, answer_lookup
 
 
 # ── Page builders ──────────────────────────────────────────────────────────────
@@ -207,7 +232,7 @@ def build_page1(doc):
 
 
 def build_page2(doc):
-    """Matching exercise — Japanese on left, English scrambled on right."""
+    """Compact matching exercise with a lettered answer bank."""
     page_break(doc)
 
     # ── Page header ───────────────────────────────────────────────────────────
@@ -219,9 +244,9 @@ def build_page2(doc):
     # ── Instructions ─────────────────────────────────────────────────────────
     heading(doc, 'Instructions — Part 2: Matching')
     inst_items = [
-        ('1.', 'Look at the Japanese number in the left column (kanji + hiragana).'),
-        ('2.', 'Find its English meaning in the right column.'),
-        ('3.', 'Draw a straight line connecting the two.  The first one is done for you.'),
+        ('1.', 'Look at the kanji and the hiragana reading in each box.'),
+        ('2.', 'Find the matching English word in the answer bank.'),
+        ('3.', 'Write the correct letter on the blank line for each number.'),
     ]
     for n, txt in inst_items:
         p = doc.add_paragraph()
@@ -231,111 +256,78 @@ def build_page2(doc):
         add_run(p, f'{n} ', bold=True, size=10, color=TEAL)
         add_run(p, txt, size=10)
 
-    # Tip box
     tip_p = doc.add_paragraph()
     tip_p.paragraph_format.left_indent  = Cm(0.4)
     tip_p.paragraph_format.space_before = Pt(1)
     tip_p.paragraph_format.space_after  = Pt(3)
-    add_run(tip_p, '💡 Tip: ', bold=True, size=10, color=GOLD)
-    add_run(tip_p, 'Look for shared kanji between numbers you already know (e.g. 十 appears in 11, 12, 20…)', italic=True, size=10, color=GREY)
+    add_run(tip_p, 'Tip: ', bold=True, size=10, color=GOLD)
+    add_run(tip_p, 'Numbers 11-19 all start with 十, so spot the ones digit after it.', italic=True, size=10, color=GREY)
     divider(doc)
 
-    section_banner(doc, 'Part 2 — Match the Numbers', bg=TEAL)
-    doc.add_paragraph().paragraph_format.space_after = Pt(4)
+    section_banner(doc, 'Part 2 — Match the Number Meanings', bg=TEAL)
 
-    # Build two scrambled columns
-    left_items  = list(MATCH_NUMBERS)          # ordered  (JP side)
-    right_items = list(MATCH_NUMBERS)          # shuffled (EN side)
-    random.seed(42)
-    random.shuffle(right_items)
-    # Make sure nothing lines up on the same row (re-shuffle if needed)
-    attempts = 0
-    while any(l is r for l, r in zip(left_items, right_items)) and attempts < 20:
-        random.shuffle(right_items)
-        attempts += 1
+    intro = doc.add_paragraph()
+    intro.paragraph_format.space_before = Pt(1)
+    intro.paragraph_format.space_after = Pt(2)
+    add_run(intro, 'Answer bank', bold=True, size=11, color=NAVY)
+    add_run(intro, '  Write the correct letter for each number box below.', size=10, color=DARK)
 
-    # Two-column matching table
-    tbl = doc.add_table(rows=len(left_items) + 1, cols=5)
-    tbl.style = 'Table Grid'
-
-    # Header row
-    headers = ['#', 'Japanese', 'Hiragana', '', 'English']
-    header_cols = [0, 1, 2, 3, 4]
-    for ci, (txt, col_idx) in enumerate(zip(headers, header_cols)):
-        c = tbl.rows[0].cells[col_idx]
-        set_cell_bg(c, NAVY)
-        c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-        p = c.paragraphs[0]
+    bank, _answer_lookup = get_matching_bank()
+    bank_tbl = doc.add_table(rows=5, cols=4)
+    bank_tbl.style = 'Table Grid'
+    for idx, (label, item) in enumerate(bank):
+        row_idx = idx // 4
+        col_idx = idx % 4
+        eng_display = item[0].split('—')[-1].strip()
+        cell = bank_tbl.rows[row_idx].cells[col_idx]
+        set_cell_bg(cell, LIGHT if row_idx % 2 == 0 else WHITE)
+        cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+        p = cell.paragraphs[0]
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.paragraph_format.space_before = p.paragraph_format.space_after = Pt(2)
-        add_run(p, txt, bold=True, size=10, color=WHITE)
+        add_run(p, f'{label}. ', bold=True, size=10, color=TEAL)
+        add_run(p, eng_display, size=9, color=DARK)
 
-    # Data rows
-    for row_i, (left, right) in enumerate(zip(left_items, right_items)):
-        row   = tbl.rows[row_i + 1]
-        bg    = MINT if row_i % 2 == 0 else WHITE
-        _eng_l, kanji_l, hira_l, _ro_l, _note_l = left
-        eng_r, _kj_r,  _hi_r,  _ro_r, _note_r  = right
+    doc.add_paragraph().paragraph_format.space_after = Pt(2)
 
-        # Col 0 — row number
-        c0 = row.cells[0]
-        set_cell_bg(c0, LIGHT)
-        c0.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-        p0 = c0.paragraphs[0]
-        p0.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p0.paragraph_format.space_before = p0.paragraph_format.space_after = Pt(3)
-        add_run(p0, str(row_i + 1), bold=True, size=10, color=NAVY)
+    grid_tbl = doc.add_table(rows=10, cols=2)
+    grid_tbl.style = 'Table Grid'
+    for pair_idx in range(10):
+        for col_idx in range(2):
+            item_idx = pair_idx * 2 + col_idx
+            eng, kanji, hira, _ro, _note = MATCH_NUMBERS[item_idx]
+            cell = grid_tbl.rows[pair_idx].cells[col_idx]
+            set_cell_bg(cell, MINT if pair_idx % 2 == 0 else WHITE)
+            cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
 
-        # Col 1 — kanji
-        c1 = row.cells[1]
-        set_cell_bg(c1, bg)
-        c1.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-        p1 = c1.paragraphs[0]
-        p1.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p1.paragraph_format.space_before = p1.paragraph_format.space_after = Pt(4)
-        add_run(p1, kanji_l, bold=True, size=18, color=NAVY)
+            p_top = cell.paragraphs[0]
+            p_top.paragraph_format.space_before = Pt(2)
+            p_top.paragraph_format.space_after = Pt(0)
+            add_run(p_top, f'{item_idx + 1}. ', bold=True, size=10, color=NAVY)
+            add_run(p_top, 'Letter: ', bold=True, size=9, color=TEAL)
+            add_run(p_top, '____', size=9, color=DARK)
 
-        # Col 2 — hiragana
-        c2 = row.cells[2]
-        set_cell_bg(c2, bg)
-        c2.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-        p2 = c2.paragraphs[0]
-        p2.paragraph_format.space_before = p2.paragraph_format.space_after = Pt(4)
-        add_run(p2, hira_l, italic=True, size=11, color=TEAL)
+            p_body = cell.add_paragraph()
+            p_body.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p_body.paragraph_format.space_before = Pt(1)
+            p_body.paragraph_format.space_after = Pt(2)
+            add_run(p_body, kanji, bold=True, size=18, color=NAVY)
+            add_run(p_body, f'\n{hira}', size=10, color=TEAL)
 
-        # Col 3 — drawing space (blank, student draws line here)
-        c3 = row.cells[3]
-        set_cell_bg(c3, WHITE)
-        p3 = c3.paragraphs[0]
-        p3.paragraph_format.space_before = p3.paragraph_format.space_after = Pt(4)
-        add_run(p3, '  ←  draw line  →  ', italic=True, size=8, color=GREY)
+    doc.add_paragraph().paragraph_format.space_after = Pt(2)
 
-        # Col 4 — English (shuffled)
-        c4 = row.cells[4]
-        set_cell_bg(c4, bg)
-        c4.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-        p4 = c4.paragraphs[0]
-        p4.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p4.paragraph_format.space_before = p4.paragraph_format.space_after = Pt(4)
-        # Strip the number prefix for the English column (e.g. "1  — One" → "One")
-        eng_display = eng_r.split('—')[-1].strip()
-        add_run(p4, eng_display, bold=True, size=11, color=DARK)
-
-    doc.add_paragraph().paragraph_format.space_after = Pt(3)
-
-    # Pronunciation reminder
-    heading(doc, 'Quick Pronunciation Reminder', level=2)
+    heading(doc, 'How the Numbers Work', level=2)
     for tip in [
-        'いち (ichi), に (ni), さん (san), し/よん (shi/yon), ご (go)',
-        'ろく (roku), しち/なな (shichi/nana), はち (hachi), く/きゅう (ku/kyuu), じゅう (juu)',
-        'Pattern: 十一 = juu + ichi, 二十 = ni + juu, 百 = hyaku, 千 = sen',
+        '1-10 are the base numbers you memorize first: 一 いち, 二 に, 三 さん, 四 し/よん, 五 ご, 六 ろく, 七 しち/なな, 八 はち, 九 く/きゅう, 十 じゅう.',
+        '11-19 use 十 + the ones digit: 11 = 十一 (じゅういち), 14 = 十四 (じゅうよん), 19 = 十九 (じゅうきゅう).',
+        '20 is 二十 (にじゅう). The same pattern keeps going: 21 = 二十一 (にじゅういち), 35 = 三十五 (さんじゅうご), 99 = 九十九 (きゅうじゅうきゅう), 100 = 百 (ひゃく), 1000 = 千 (せん).',
     ]:
         pt = doc.add_paragraph()
-        pt.paragraph_format.left_indent  = Cm(0.6)
+        pt.paragraph_format.left_indent = Cm(0.6)
         pt.paragraph_format.space_before = Pt(0)
-        pt.paragraph_format.space_after  = Pt(1)
-        add_run(pt, '▸  ', bold=True, size=10, color=GOLD)
-        add_run(pt, tip, size=10)
+        pt.paragraph_format.space_after = Pt(1)
+        add_run(pt, '- ', bold=True, size=10, color=GOLD)
+        add_run(pt, tip, size=8)
 
 
 def build_page3(doc):
@@ -406,9 +398,10 @@ def build_page3(doc):
     # ── Part 2 matching answers ───────────────────────────────────────────────
     heading(doc, 'Part 2 — Matching Answers')
 
-    mtbl = doc.add_table(rows=1, cols=3)
+    _, answer_lookup = get_matching_bank()
+    mtbl = doc.add_table(rows=1, cols=5)
     mtbl.style = 'Table Grid'
-    for i, col_label in enumerate(['Japanese', 'Hiragana', 'English']):
+    for i, col_label in enumerate(['#', 'Kanji', 'Reading', 'Letter', 'English']):
         c = mtbl.rows[0].cells[i]
         set_cell_bg(c, TEAL)
         c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
@@ -422,9 +415,11 @@ def build_page3(doc):
         bg  = MINT if row_i % 2 == 0 else WHITE
         eng_display = eng.split('—')[-1].strip()
         for ci, (val, clr, sz, bld) in enumerate([
-            (kanji,       TEAL, 14, True),
-            (hira,        NAVY, 11, False),
-            (eng_display, DARK, 11, False),
+            (str(row_i + 1),         GREY,  9,  True),
+            (kanji,                  TEAL, 14, True),
+            (hira,                   NAVY, 10, False),
+            (answer_lookup[eng],     TEAL, 10, True),
+            (eng_display,            DARK, 10, False),
         ]):
             c = row.cells[ci]
             set_cell_bg(c, bg)
@@ -440,10 +435,10 @@ def build_page3(doc):
     # ── Teacher activity suggestions ──────────────────────────────────────────
     heading(doc, "Teacher's Notes & Suggested Activities")
     for title, desc in [
-        ('Counting drill (5 min)',       'Count aloud 1–10 as a class, then backwards.'),
-        ('Flash cards (10 min)',          'Show kanji card; students call out the English or romaji.'),
+        ('Counting drill (5 min)',       'Count aloud 1–20 as a class, then backwards in pairs.'),
+        ('Flash cards (10 min)',          'Show a kanji card; students call out the English or hiragana reading.'),
         ('Pattern discovery (5 min)',    'Write 11–19 on board; ask students to spot the pattern (十 + digit).'),
-        ('Matching check (pair work)',   'Partners compare drawn lines and discuss any differences.'),
+        ('Matching check (pair work)',   'Partners compare answer letters and explain how they matched each number.'),
         ('Extension — bigger numbers',  'Introduce 万 (man = 10,000) for advanced students.'),
     ]:
         pa = doc.add_paragraph()
