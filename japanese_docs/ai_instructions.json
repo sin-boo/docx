@@ -1,0 +1,61 @@
+{
+  "project": "Japanese worksheet DOCX generator",
+  "folder": "japanese_docs",
+  "script": "japanese_greetings_worksheet.py",
+  "output_file": "japanese_greetings_worksheet.docx",
+  "run_command": "cd japanese_docs && python japanese_greetings_worksheet.py",
+
+  "capabilities": [
+    "Add, remove, or reorder Part 1 questions (prompt, Japanese blank, romaji blank, hint)",
+    "Add, remove, or reorder Part 2 roleplay scenarios and speaker lines",
+    "Edit Learning Objectives and Instructions text",
+    "Edit Pronunciation Tips and Printing & Formatting Tips",
+    "Edit banner titles (e.g. 'Beginner Japanese', 'Greetings & Essential Phrases')",
+    "Edit info row labels (Name, Class, Date, Period)",
+    "Edit Answer Key rows (prompt, Japanese, romaji, notes) to match Part 1",
+    "Edit Teacher's Notes & Suggested Activities (title + description pairs)",
+    "Change colours by using palette names in helpers (see palette)",
+    "Change margins (section.top_margin, etc. in Cm)",
+    "Add new sections using heading(), body(), blank_line(), divider(), page_break()"
+  ],
+
+  "helpers": {
+    "set_cell_bg": { "args": ["cell", "color"], "desc": "Table cell background. color = palette name." },
+    "set_para_bg": { "args": ["para", "color"], "desc": "Paragraph background." },
+    "add_run": { "args": ["para", "text"], "kwargs": "bold, italic, size, color, font", "desc": "Add styled run to paragraph. color from palette." },
+    "heading": { "args": ["text"], "kwargs": "level (1 or 2)", "desc": "Section heading." },
+    "body": { "args": ["text"], "kwargs": "indent, space_after", "desc": "Body paragraph." },
+    "blank_line": { "args": ["text", "label"], "kwargs": "hint, indent_cm", "desc": "Label + underline line; optional romaji hint in grey." },
+    "page_break": { "args": [], "desc": "Insert page break." },
+    "divider": { "args": [], "desc": "Teal horizontal rule." }
+  },
+
+  "palette": {
+    "NAVY": "#1A3A5C",
+    "TEAL": "#007A87",
+    "GOLD": "#E6A817",
+    "LIGHT": "#F0F6FA",
+    "WHITE": "#FFFFFF",
+    "DARK": "#1A1A2E",
+    "GREY": "#6B7B8D"
+  },
+
+  "document_structure": {
+    "page_1": ["Banner", "Info table", "Learning Objectives", "Instructions", "Part 1 — all 10 questions (fits on one page)"],
+    "page_2": ["Part 2 roleplay scenarios", "Pronunciation Tips"],
+    "page_3": ["Answer Key banner", "Answer table", "Teacher's Notes", "Printing & Formatting Tips"]
+  },
+
+  "data_arrays": {
+    "questions": "List of (prompt, jp_blank, ro_blank, hint). Edit in Part 1 loop.",
+    "scenarios": "List of (title, list of (speaker, cue)). Edit in Part 2.",
+    "answers": "List of (prompt, japanese, romaji, note). Must match questions count/order for Answer Key."
+  },
+
+  "rules": [
+    "Keep answers array in sync with questions (same count and order).",
+    "Use palette names (NAVY, TEAL, etc.) when calling helpers that take color.",
+    "Do not remove or rename helper functions; only change document content and data lists.",
+    "After editing japanese_greetings_worksheet.py, run it to regenerate japanese_greetings_worksheet.docx."
+  ]
+}
