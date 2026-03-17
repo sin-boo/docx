@@ -413,6 +413,12 @@ def build_page1(doc, config):
 
     doc.add_paragraph().paragraph_format.space_after = Pt(1)
     section_banner(doc, 'Part 1 — Copy the Kana', bg=NAVY)
+
+    copy_intro = doc.add_paragraph()
+    copy_intro.paragraph_format.space_before = Pt(1)
+    copy_intro.paragraph_format.space_after = Pt(2)
+    add_run(copy_intro, 'Look at each kana, say its sound out loud, then write the same kana on both blank lines.', size=10, color=DARK)
+
     copy_tbl = doc.add_table(rows=math.ceil(len(config['kana']) / 2), cols=2)
     copy_tbl.style = 'Table Grid'
     copy_tbl.autofit = False
@@ -432,12 +438,13 @@ def build_page1(doc, config):
         p0.paragraph_format.space_after = Pt(0)
         add_run(p0, kana, bold=True, size=20, color=NAVY)
 
-        for _ in range(2):
+        for line_no in range(1, 3):
             pl = cell.add_paragraph()
             pl.alignment = WD_ALIGN_PARAGRAPH.CENTER
             pl.paragraph_format.space_before = Pt(0)
             pl.paragraph_format.space_after = Pt(0)
-            add_run(pl, '_' * 22, size=9, color=DARK)
+            add_run(pl, f'Copy {line_no}: ', bold=True, size=8, color=TEAL)
+            add_run(pl, '_' * 15, size=9, color=DARK)
 
     if len(config['kana']) % 2 == 1:
         copy_tbl.rows[-1].cells[-1].text = ''
