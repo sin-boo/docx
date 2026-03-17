@@ -1,6 +1,6 @@
 # reusre-maker
 
-Python project for generating DOCX documents. Includes a Japanese greetings worksheet (student + answer key).
+Python project for generating DOCX documents. Includes Japanese worksheet generators for greetings, dialogues, and numbers.
 
 ## Setup
 
@@ -12,6 +12,8 @@ pip install -r requirements.txt
 
 - **Simple docx:** `python create_docx.py` → creates `output.docx`
 - **Japanese greetings worksheet:** `cd japanese_docs && python japanese_greetings_worksheet.py` → creates `japanese_docs/japanese_greetings_worksheet.docx`
+- **Japanese dialogue worksheet:** `cd japanese_docs && python japanese_dialogue_worksheet.py` → creates `japanese_docs/japanese_dialogue_worksheet.docx`
+- **Japanese numbers worksheet:** `cd japanese_docs && python japanese_numbers_worksheet.py` → creates `japanese_docs/japanese_numbers_worksheet.docx`
 
 ## Layout
 
