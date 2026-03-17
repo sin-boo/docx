@@ -11,9 +11,16 @@ pip install -r requirements.txt
 ## Usage
 
 - **Simple docx:** `python create_docx.py` → creates `output.docx`
-- **Japanese greetings worksheet:** `cd japanese_docs && python japanese_greetings_worksheet.py` → creates `japanese_docs/japanese_greetings_worksheet.docx`
-- **Japanese dialogue worksheet:** `cd japanese_docs && python japanese_dialogue_worksheet.py` → creates `japanese_docs/japanese_dialogue_worksheet.docx`
-- **Japanese numbers worksheet:** `cd japanese_docs && python japanese_numbers_worksheet.py` → creates `japanese_docs/japanese_numbers_worksheet.docx`
+- **Japanese greetings worksheet:** `python3 japanese_docs/generators/japanese_greetings_worksheet.py` → creates `japanese_docs/output/japanese_greetings_worksheet.docx`
+- **Japanese dialogue worksheet:** `python3 japanese_docs/generators/japanese_dialogue_worksheet.py` → creates `japanese_docs/output/japanese_dialogue_worksheet.docx`
+- **Japanese numbers worksheet:** `python3 japanese_docs/generators/japanese_numbers_worksheet.py` → creates `japanese_docs/output/japanese_numbers_worksheet.docx`
+
+## Japanese docs folder structure
+
+- `japanese_docs/generators/` — Python worksheet generator scripts
+- `japanese_docs/output/` — generated `.docx` files
+- `japanese_docs/output/legacy/` — older generated files kept for reference
+- `japanese_docs/ai_instructions.json` — project-specific editing notes
 
 ## Layout
 

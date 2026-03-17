@@ -508,7 +508,11 @@ def main():
     build_page6(doc)
     build_page7(doc)
 
-    out = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'japanese_numbers_worksheet.docx')
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    docs_dir = os.path.dirname(script_dir)
+    output_dir = os.path.join(docs_dir, 'output')
+    os.makedirs(output_dir, exist_ok=True)
+    out = os.path.join(output_dir, 'japanese_numbers_worksheet.docx')
     doc.save(out)
     print(f'Saved: {out}')
 

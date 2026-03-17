@@ -1,9 +1,9 @@
 {
   "project": "Japanese worksheet DOCX generator",
   "folder": "japanese_docs",
-  "script": "japanese_greetings_worksheet.py",
-  "output_file": "japanese_greetings_worksheet.docx",
-  "run_command": "cd japanese_docs && python japanese_greetings_worksheet.py",
+  "script": "generators/japanese_greetings_worksheet.py",
+  "output_file": "output/japanese_greetings_worksheet.docx",
+  "run_command": "python3 japanese_docs/generators/japanese_greetings_worksheet.py",
 
   "capabilities": [
     "Add, remove, or reorder Part 1 questions (prompt, Japanese blank, romaji blank, hint)",
@@ -56,6 +56,6 @@
     "Keep answers array in sync with questions (same count and order).",
     "Use palette names (NAVY, TEAL, etc.) when calling helpers that take color.",
     "Do not remove or rename helper functions; only change document content and data lists.",
-    "After editing japanese_greetings_worksheet.py, run it to regenerate japanese_greetings_worksheet.docx."
+    "After editing generators/japanese_greetings_worksheet.py, run it to regenerate output/japanese_greetings_worksheet.docx."
   ]
 }
