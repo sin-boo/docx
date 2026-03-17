@@ -14,11 +14,13 @@ pip install -r requirements.txt
 - **Japanese greetings worksheet:** `python3 japanese_docs/generators/japanese_greetings_worksheet.py` → creates `japanese_docs/output/japanese_greetings_worksheet.docx`
 - **Japanese dialogue worksheet:** `python3 japanese_docs/generators/japanese_dialogue_worksheet.py` → creates `japanese_docs/output/japanese_dialogue_worksheet.docx`
 - **Japanese numbers worksheet:** `python3 japanese_docs/generators/japanese_numbers_worksheet.py` → creates `japanese_docs/output/japanese_numbers_worksheet.docx`
+- **Japanese hiragana foundations series:** `python3 japanese_docs/generators/japanese_hiragana_foundations_series.py` → creates 10 worksheets in `japanese_docs/output/hiragana_series/`
 
 ## Japanese docs folder structure
 
 - `japanese_docs/generators/` — Python worksheet generator scripts
 - `japanese_docs/output/` — generated `.docx` files
+- `japanese_docs/output/hiragana_series/` — 10 early-beginner hiragana worksheets
 - `japanese_docs/output/legacy/` — older generated files kept for reference
 - `japanese_docs/ai_instructions.json` — project-specific editing notes
 
