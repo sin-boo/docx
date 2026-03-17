@@ -135,8 +135,6 @@ def remove_cell_borders(cell):
             border = OxmlElement(f'w:{edge}')
             tcBorders.append(border)
         border.set(qn('w:val'), 'nil')
-
-
 def get_matching_bank():
     """Return a deterministic answer bank and lookup for Part 2."""
     items = list(MATCH_NUMBERS)
