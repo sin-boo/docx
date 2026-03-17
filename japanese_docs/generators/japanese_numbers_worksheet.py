@@ -80,6 +80,17 @@ def add_run(para, text, bold=False, italic=False, size=12, color=DARK, font='Cal
     r.font.name  = font
     return r
 
+
+def add_corner_watermark(doc, text='neuralforge.cc'):
+    for section in doc.sections:
+        footer = section.footer
+        p = footer.paragraphs[0] if footer.paragraphs else footer.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        p.paragraph_format.space_before = Pt(0)
+        p.paragraph_format.space_after = Pt(0)
+        add_run(p, text, size=7, color=GREY)
+
+
 def heading(doc, text, level=1):
     p = doc.add_paragraph()
     p.paragraph_format.space_before = Pt(6 if level == 1 else 4)
@@ -499,6 +510,8 @@ def main():
         section.bottom_margin = Inches(0.2)
         section.left_margin   = Inches(0.2)
         section.right_margin  = Inches(0.2)
+
+    add_corner_watermark(doc)
 
     build_page1(doc)
     build_page2(doc)
