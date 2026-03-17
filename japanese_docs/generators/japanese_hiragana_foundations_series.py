@@ -6,6 +6,8 @@ from docx.enum.table import WD_ALIGN_VERTICAL
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
+from output_utils import save_outputs
+
 # ── Colour palette ─────────────────────────────────────────────────────────────
 NAVY  = RGBColor(0x1A, 0x3A, 0x5C)
 TEAL  = RGBColor(0x00, 0x7A, 0x87)
@@ -763,15 +765,12 @@ def build_doc(config):
 
 def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    docs_dir = os.path.dirname(script_dir)
-    output_dir = os.path.join(docs_dir, 'output', 'hiragana_series')
-    os.makedirs(output_dir, exist_ok=True)
 
     for config in WORKSHEETS:
         doc = build_doc(config)
-        out = os.path.join(output_dir, config['slug'])
-        doc.save(out)
-        print(f'Saved: {out}')
+        docx_path, pdf_path = save_outputs(doc, script_dir, config['slug'], subdir='hiragana_series')
+        print(f'Saved DOCX: {docx_path}')
+        print(f'Saved PDF: {pdf_path}')
 
 
 if __name__ == '__main__':
