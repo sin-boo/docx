@@ -348,11 +348,19 @@ def get_odd_one_out_prompts(config):
     ]
 
 
-def get_worked_examples():
+def get_example_source(config):
+    current_idx = WORKSHEETS.index(config)
+    source_idx = 2 if current_idx != 2 else 1
+    return WORKSHEETS[source_idx]
+
+
+def get_worked_examples(config):
+    source = get_example_source(config)
+    fill_prompt, fill_answer = get_fill_in_prompts(source)[0]
     return [
-        ('[kana]  ->  [your reading]', 'Write one short romaji answer on the line.'),
-        ('A  __  C  __  E', 'Fill in the missing middle parts of the pattern.'),
-        ('A  B  X  B', 'Circle the one item that does not belong.'),
+        (f"{source['kana'][0][0]}  ->  {source['kana'][0][1]}", 'Example from a different row.'),
+        (source['pairs'][0][0], source['pairs'][0][1]),
+        (fill_prompt, fill_answer),
     ]
 
 
@@ -437,7 +445,8 @@ def build_page1(doc, config):
 
     examples_tbl = doc.add_table(rows=1, cols=3)
     examples_tbl.style = 'Table Grid'
-    for idx, (prompt, answer) in enumerate(get_worked_examples()):
+    source = get_example_source(config)
+    for idx, (prompt, answer) in enumerate(get_worked_examples(config)):
         cell = examples_tbl.rows[0].cells[idx]
         set_cell_bg(cell, LIGHT)
         cell.vertical_alignment = WD_ALIGN_VERTICAL.TOP
@@ -463,6 +472,8 @@ def build_page1(doc, config):
     add_run(act1_intro, 'Look at each kana and ', size=10, color=DARK)
     add_run(act1_intro, 'write its reading in romaji', bold=True, size=10, color=TEAL)
     add_run(act1_intro, '. Write the sound from memory. ', size=10, color=DARK)
+    add_run(act1_intro, 'Example from another row: ', bold=True, size=10, color=GOLD)
+    add_run(act1_intro, f"{source['kana'][0][0]} = {source['kana'][0][1]}. ", italic=True, size=10, color=GREY)
     add_run(act1_intro, 'Do not use the examples as answers', bold=True, size=10, color=NAVY)
     add_run(act1_intro, ' because they only show how the activity works.', size=10, color=DARK)
 
