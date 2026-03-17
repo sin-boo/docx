@@ -348,14 +348,12 @@ def get_odd_one_out_prompts(config):
     ]
 
 
-def get_worked_examples(config):
-    examples = [
-        (config['kana'][0][0], config['kana'][0][1]),
-        (config['pairs'][0][0], config['pairs'][0][1]),
+def get_worked_examples():
+    return [
+        ('[kana]  ->  [your reading]', 'Write one short romaji answer on the line.'),
+        ('A  __  C  __  E', 'Fill in the missing middle parts of the pattern.'),
+        ('A  B  X  B', 'Circle the one item that does not belong.'),
     ]
-    fill_prompt, fill_answer = get_fill_in_prompts(config)[0]
-    examples.append((fill_prompt, fill_answer))
-    return examples
 
 
 def get_row_pattern_note(config):
@@ -427,9 +425,19 @@ def build_page1(doc, config):
 
     doc.add_paragraph().paragraph_format.space_after = Pt(1)
     section_banner(doc, 'Worked Examples', bg=GOLD)
+
+    example_note = doc.add_paragraph()
+    example_note.paragraph_format.space_before = Pt(1)
+    example_note.paragraph_format.space_after = Pt(2)
+    add_run(example_note, 'These examples show the ', size=10, color=DARK)
+    add_run(example_note, 'format only', bold=True, size=10, color=TEAL)
+    add_run(example_note, '. They are ', size=10, color=DARK)
+    add_run(example_note, 'not', bold=True, size=10, color=NAVY)
+    add_run(example_note, ' answers to the real questions below.', size=10, color=DARK)
+
     examples_tbl = doc.add_table(rows=1, cols=3)
     examples_tbl.style = 'Table Grid'
-    for idx, (prompt, answer) in enumerate(get_worked_examples(config)):
+    for idx, (prompt, answer) in enumerate(get_worked_examples()):
         cell = examples_tbl.rows[0].cells[idx]
         set_cell_bg(cell, LIGHT)
         cell.vertical_alignment = WD_ALIGN_VERTICAL.TOP
@@ -454,8 +462,9 @@ def build_page1(doc, config):
     act1_intro.paragraph_format.space_after = Pt(2)
     add_run(act1_intro, 'Look at each kana and ', size=10, color=DARK)
     add_run(act1_intro, 'write its reading in romaji', bold=True, size=10, color=TEAL)
-    add_run(act1_intro, '. Example: ', size=10, color=DARK)
-    add_run(act1_intro, f"{config['kana'][0][0]} = {config['kana'][0][1]}", bold=True, size=10, color=NAVY)
+    add_run(act1_intro, '. Write the sound from memory. ', size=10, color=DARK)
+    add_run(act1_intro, 'Do not use the examples as answers', bold=True, size=10, color=NAVY)
+    add_run(act1_intro, ' because they only show how the activity works.', size=10, color=DARK)
 
     reading_tbl = doc.add_table(rows=len(config['kana']) + 1, cols=3)
     reading_tbl.style = 'Table Grid'
