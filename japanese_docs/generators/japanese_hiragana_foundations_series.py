@@ -313,6 +313,31 @@ def build_sound_bank(kana_items):
     return bank, answer_lookup
 
 
+def get_row_pattern_note(config):
+    sounds = [sound for _, sound, _tip in config['kana']]
+    if config['title'].endswith('Vowels'):
+        return "These five vowels are the sound base of the whole hiragana chart: a, i, u, e, o."
+    if len(sounds) == 5:
+        return f"Most full hiragana rows follow the vowel order a, i, u, e, o. In this set that sounds like: {', '.join(sounds)}."
+    return f"This is a short row, so it does not use all five vowel spots. Memorize the order as: {', '.join(sounds)}."
+
+
+def get_special_sound_note(config):
+    sounds = [sound for _, sound, _tip in config['kana']]
+    special_map = {
+        'shi': 'し = shi',
+        'chi': 'ち = chi',
+        'tsu': 'つ = tsu',
+        'fu': 'ふ = fu',
+    }
+    specials = [text for sound, text in special_map.items() if sound in sounds]
+    if 'W Row and ん' in config['title']:
+        return "This set has two special basics: を is usually read as o, and ん is its own sound by itself."
+    if specials:
+        return f"Watch the special reading in this set: {', '.join(specials)}."
+    return "This set is very regular, so you can focus on the letter shape and the changing vowel sound."
+
+
 def build_header(doc, config):
     tbl = doc.add_table(rows=2, cols=1)
     tbl.style = 'Table Grid'
@@ -343,7 +368,10 @@ def build_page1(doc, config):
     heading(doc, 'What you are learning')
     for tip in [
         f"This worksheet focuses on the set: {config['subtitle']}.",
+        "Each hiragana letter stands for one sound chunk or beat. Read one kana smoothly instead of spelling it out like separate English letters.",
         config['focus'],
+        get_row_pattern_note(config),
+        get_special_sound_note(config),
         "Say the sound, copy the kana, then match the kana to the correct sound hint.",
     ]:
         p = doc.add_paragraph(style='List Bullet')
@@ -464,7 +492,7 @@ def build_page2(doc, config):
     intro = doc.add_paragraph()
     intro.paragraph_format.space_before = Pt(1)
     intro.paragraph_format.space_after = Pt(2)
-    add_run(intro, 'Use this page as a reference after students finish page 1.', size=10, color=DARK)
+    add_run(intro, 'Use this page as a reference after students finish page 1. Read each kana left to right and treat each one as one clean sound beat.', size=10, color=DARK)
 
     pair_tbl = doc.add_table(rows=len(config['pairs']) + 1, cols=2)
     pair_tbl.style = 'Table Grid'
@@ -526,6 +554,20 @@ def build_page2(doc, config):
             p.paragraph_format.space_before = Pt(2)
             p.paragraph_format.space_after = Pt(2)
             add_run(p, val, bold=bld, size=sz, color=clr)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(1)
+    heading(doc, 'How to study this set', level=2)
+    for tip in [
+        "Point to one letter at a time and say the full sound in one step, such as ka or shi.",
+        "When you read a practice pair, do not stop too long between the two kana.",
+        "After checking the answer key, cover the sound column and quiz yourself again from memory.",
+    ]:
+        p = doc.add_paragraph()
+        p.paragraph_format.left_indent = Cm(0.6)
+        p.paragraph_format.space_before = Pt(0)
+        p.paragraph_format.space_after = Pt(1)
+        add_run(p, '▸ ', bold=True, size=10, color=GOLD)
+        add_run(p, tip, size=10, color=DARK)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(1)
     heading(doc, 'Beginner notes')
