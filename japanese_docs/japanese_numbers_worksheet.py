@@ -1,7 +1,7 @@
 import os
 import random
 from docx import Document
-from docx.shared import Pt, RGBColor, Cm
+from docx.shared import Pt, RGBColor, Cm, Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_ALIGN_VERTICAL
 from docx.oxml.ns import qn
@@ -495,10 +495,10 @@ def main():
     doc = Document()
 
     for section in doc.sections:
-        section.top_margin    = Cm(2.0)
-        section.bottom_margin = Cm(2.0)
-        section.left_margin   = Cm(2.0)
-        section.right_margin  = Cm(2.0)
+        section.top_margin    = Inches(0.2)
+        section.bottom_margin = Inches(0.2)
+        section.left_margin   = Inches(0.2)
+        section.right_margin  = Inches(0.2)
 
     build_page1(doc)
     build_page2(doc)
