@@ -121,6 +121,20 @@ def divider(doc):
     pPr.append(pBdr)
 
 
+def remove_cell_borders(cell):
+    """Hide table cell borders for cleaner worksheet layouts."""
+    tcPr = cell._tc.get_or_add_tcPr()
+    tcBorders = tcPr.first_child_found_in('w:tcBorders')
+    if tcBorders is None:
+        tcBorders = OxmlElement('w:tcBorders')
+        tcPr.append(tcBorders)
+
+    for edge in ('top', 'left', 'bottom', 'right'):
+        border = tcBorders.find(qn(f'w:{edge}'))
+        if border is None:
+            border = OxmlElement(f'w:{edge}')
+            tcBorders.append(border)
+        border.set(qn('w:val'), 'nil')
 def get_matching_bank():
     """Return a deterministic answer bank and lookup for Part 2."""
     items = list(MATCH_NUMBERS)
@@ -209,26 +223,43 @@ def build_page1(doc):
     # ── Part 1 — Write the numbers ────────────────────────────────────────────
     section_banner(doc, 'Part 1 — Write the Numbers', bg=NAVY)
 
-    for i, (eng, _kanji, _hira, hint, note) in enumerate(NUMBERS, 1):
-        # Question label
-        pq = doc.add_paragraph()
-        pq.paragraph_format.space_before = Pt(3)
-        pq.paragraph_format.space_after  = Pt(0)
-        add_run(pq, f'{i:>2}.  ', bold=True, size=10, color=TEAL)
-        add_run(pq, eng, bold=False, size=10, color=DARK)
-        if note:
-            add_run(pq, f'  ★ {note}', italic=True, size=8, color=GREY)
+    part1_tbl = doc.add_table(rows=(len(NUMBERS) + 1) // 2, cols=2)
+    part1_tbl.style = 'Table Grid'
 
-        # Three answer lines
-        for label in ('Kanji:    ', 'Hiragana:', 'Romaji:  '):
-            pl = doc.add_paragraph()
-            pl.paragraph_format.left_indent  = Cm(1.0)
-            pl.paragraph_format.space_before = Pt(0)
-            pl.paragraph_format.space_after  = Pt(0)
-            add_run(pl, label, bold=True, size=9, color=TEAL)
-            add_run(pl, '_' * 35, size=9, color=DARK)
-            if label.startswith('Romaji') and hint:
-                add_run(pl, f'  ({hint})', italic=True, size=8, color=GREY)
+    for row_idx, row in enumerate(part1_tbl.rows):
+        for col_idx, cell in enumerate(row.cells):
+            item_idx = row_idx * 2 + col_idx
+            remove_cell_borders(cell)
+            set_cell_bg(cell, LIGHT if row_idx % 2 == 0 else WHITE)
+            cell.vertical_alignment = WD_ALIGN_VERTICAL.TOP
+
+            if item_idx >= len(NUMBERS):
+                cell.text = ''
+                continue
+
+            eng, _kanji, _hira, hint, note = NUMBERS[item_idx]
+
+            p_q = cell.paragraphs[0]
+            p_q.paragraph_format.space_before = Pt(2)
+            p_q.paragraph_format.space_after = Pt(0)
+            add_run(p_q, f'{item_idx + 1}. ', bold=True, size=10, color=TEAL)
+            add_run(p_q, eng, size=10, color=DARK)
+
+            if note:
+                p_note = cell.add_paragraph()
+                p_note.paragraph_format.space_before = Pt(0)
+                p_note.paragraph_format.space_after = Pt(1)
+                add_run(p_note, f'★ {note}', italic=True, size=7, color=GREY)
+
+            for label in ('Kanji:    ', 'Hiragana:', 'Romaji:  '):
+                pl = cell.add_paragraph()
+                pl.paragraph_format.left_indent = Cm(0.2)
+                pl.paragraph_format.space_before = Pt(0)
+                pl.paragraph_format.space_after = Pt(0)
+                add_run(pl, label, bold=True, size=9, color=TEAL)
+                add_run(pl, '_' * 21, size=9, color=DARK)
+                if label.startswith('Romaji') and hint:
+                    add_run(pl, f'  ({hint})', italic=True, size=7, color=GREY)
 
 
 def build_page2(doc):
