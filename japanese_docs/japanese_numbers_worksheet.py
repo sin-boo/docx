@@ -151,30 +151,18 @@ def get_matching_bank():
 
 
 # ── Page builders ──────────────────────────────────────────────────────────────
+TOTAL_PAGES = 7
 
-def build_page1(doc):
-    """Banner, info row, objectives, Part 1 — write the numbers."""
 
-    # ── Title banner ──────────────────────────────────────────────────────────
-    tbl = doc.add_table(rows=2, cols=1)
-    tbl.style = 'Table Grid'
-    r0 = tbl.rows[0].cells[0]
-    set_cell_bg(r0, NAVY)
-    r0.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-    p0 = r0.paragraphs[0]
-    p0.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p0.paragraph_format.space_before, p0.paragraph_format.space_after = Pt(5), Pt(2)
-    add_run(p0, 'Beginner Japanese', bold=True, size=20, color=WHITE)
-    add_run(p0, '\nNumbers 1–1000  ·  数字 (sūji)', bold=False, size=13, color=GOLD)
-    r1 = tbl.rows[1].cells[0]
-    set_cell_bg(r1, TEAL)
-    p1 = r1.paragraphs[0]
-    p1.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p1.paragraph_format.space_before, p1.paragraph_format.space_after = Pt(3), Pt(3)
-    add_run(p1, 'Student Worksheet  ·  Page 1 of 3', bold=False, size=10, color=WHITE)
-    doc.add_paragraph().paragraph_format.space_after = Pt(2)
+def add_page_label(doc, page_no, total_pages, label='Student Worksheet'):
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.paragraph_format.space_before = Pt(0)
+    p.paragraph_format.space_after = Pt(2)
+    add_run(p, f'{label}  ·  Page {page_no} of {total_pages}', size=10, color=GREY)
 
-    # ── Student info row ──────────────────────────────────────────────────────
+
+def add_student_info(doc):
     info = doc.add_table(rows=1, cols=4)
     info.style = 'Table Grid'
     for i, (lbl, blank) in enumerate([
@@ -189,50 +177,58 @@ def build_page1(doc):
         p = c.paragraphs[0]
         p.paragraph_format.space_before = p.paragraph_format.space_after = Pt(2)
         add_run(p, f'{lbl}: ', bold=True, size=10, color=NAVY)
-        add_run(p, blank,      size=10, color=DARK)
+        add_run(p, blank, size=10, color=DARK)
     doc.add_paragraph().paragraph_format.space_after = Pt(2)
 
-    # ── Objectives ────────────────────────────────────────────────────────────
-    heading(doc, 'Learning Objectives')
-    for obj in [
-        'Read and write Japanese numbers 1–1,000 in kanji and hiragana.',
-        'Learn the romaji (romanized) pronunciation for each number.',
-        'Understand the building-block pattern: 十 (juu), 百 (hyaku), 千 (sen).',
-    ]:
-        p = doc.add_paragraph(style='List Bullet')
-        p.paragraph_format.left_indent  = Cm(0.6)
-        p.paragraph_format.space_before = Pt(0)
-        p.paragraph_format.space_after  = Pt(1)
-        add_run(p, obj, size=10)
 
-    # ── Instructions ─────────────────────────────────────────────────────────
-    heading(doc, 'Instructions — Part 1')
-    for n, txt in [
-        ('1.', 'Write the kanji (Chinese-origin numeral) on the first line.'),
-        ('2.', 'Write the hiragana reading on the second line.'),
-        ('3.', 'Write the romaji on the third line.  Hints are in parentheses.'),
-    ]:
-        p = doc.add_paragraph()
-        p.paragraph_format.left_indent  = Cm(0.6)
-        p.paragraph_format.space_before = Pt(0)
-        p.paragraph_format.space_after  = Pt(1)
-        add_run(p, f'{n} ', bold=True, size=10, color=TEAL)
-        add_run(p, txt, size=10)
-    divider(doc)
+def add_title_banner(doc, total_pages):
+    tbl = doc.add_table(rows=2, cols=1)
+    tbl.style = 'Table Grid'
+    r0 = tbl.rows[0].cells[0]
+    set_cell_bg(r0, NAVY)
+    r0.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+    p0 = r0.paragraphs[0]
+    p0.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p0.paragraph_format.space_before, p0.paragraph_format.space_after = Pt(5), Pt(2)
+    add_run(p0, 'Beginner Japanese', bold=True, size=20, color=WHITE)
+    add_run(p0, '\nNumbers 1–1000  ·  数字 (sūji)', size=13, color=GOLD)
 
-    # ── Part 1 — Write the numbers ────────────────────────────────────────────
-    section_banner(doc, 'Part 1 — Write the Numbers', bg=NAVY)
+    r1 = tbl.rows[1].cells[0]
+    set_cell_bg(r1, TEAL)
+    p1 = r1.paragraphs[0]
+    p1.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p1.paragraph_format.space_before, p1.paragraph_format.space_after = Pt(3), Pt(3)
+    add_run(p1, f'Student Worksheet  ·  Page 1 of {total_pages}', size=10, color=WHITE)
+    doc.add_paragraph().paragraph_format.space_after = Pt(2)
 
-    part1_tbl = doc.add_table(rows=(len(NUMBERS) + 1) // 2, cols=2)
-    part1_tbl.style = 'Table Grid'
-    part1_tbl.autofit = False
-    part1_col_width = Cm(8.3)
 
-    for row_idx, row in enumerate(part1_tbl.rows):
+def build_writing_page(doc, page_no, total_pages, title, answer_label):
+    if page_no == 1:
+        add_title_banner(doc, total_pages)
+        add_student_info(doc)
+    else:
+        page_break(doc)
+        add_page_label(doc, page_no, total_pages)
+
+    section_banner(doc, title, bg=NAVY if answer_label == 'Kanji' else TEAL)
+
+    p = doc.add_paragraph()
+    p.paragraph_format.space_before = Pt(1)
+    p.paragraph_format.space_after = Pt(2)
+    add_run(p, 'Write only ', size=10)
+    add_run(p, answer_label, bold=True, size=10, color=TEAL)
+    add_run(p, ' for each English number below.', size=10)
+
+    grid = doc.add_table(rows=(len(NUMBERS) + 1) // 2, cols=2)
+    grid.style = 'Table Grid'
+    grid.autofit = False
+    col_width = Cm(8.3)
+
+    for row_idx, row in enumerate(grid.rows):
         for col_idx, cell in enumerate(row.cells):
             item_idx = row_idx * 2 + col_idx
             remove_cell_borders(cell)
-            cell.width = part1_col_width
+            cell.width = col_width
             set_cell_bg(cell, LIGHT if row_idx % 2 == 0 else WHITE)
             cell.vertical_alignment = WD_ALIGN_VERTICAL.TOP
 
@@ -240,7 +236,7 @@ def build_page1(doc):
                 cell.text = ''
                 continue
 
-            eng, _kanji, _hira, hint, note = NUMBERS[item_idx]
+            eng, _kanji, _hira, _ro, _note = NUMBERS[item_idx]
 
             p_q = cell.paragraphs[0]
             p_q.paragraph_format.space_before = Pt(2)
@@ -248,63 +244,45 @@ def build_page1(doc):
             add_run(p_q, f'{item_idx + 1}. ', bold=True, size=10, color=TEAL)
             add_run(p_q, eng, size=10, color=DARK)
 
-            if note:
-                p_note = cell.add_paragraph()
-                p_note.paragraph_format.space_before = Pt(0)
-                p_note.paragraph_format.space_after = Pt(1)
-                add_run(p_note, f'★ {note}', italic=True, size=7, color=GREY)
+            p_line = cell.add_paragraph()
+            p_line.paragraph_format.left_indent = Cm(0.2)
+            p_line.paragraph_format.space_before = Pt(0)
+            p_line.paragraph_format.space_after = Pt(1)
+            add_run(p_line, f'{answer_label}: ', bold=True, size=9, color=TEAL)
+            add_run(p_line, '_' * 22, size=9, color=DARK)
 
-            for label in ('Kanji:    ', 'Hiragana:', 'Romaji:  '):
-                pl = cell.add_paragraph()
-                pl.paragraph_format.left_indent = Cm(0.2)
-                pl.paragraph_format.space_before = Pt(0)
-                pl.paragraph_format.space_after = Pt(0)
-                add_run(pl, label, bold=True, size=9, color=TEAL)
-                add_run(pl, '_' * 21, size=9, color=DARK)
-                if label.startswith('Romaji') and hint:
-                    add_run(pl, f'  ({hint})', italic=True, size=7, color=GREY)
+
+def build_page1(doc):
+    build_writing_page(doc, 1, TOTAL_PAGES, 'Page 1 — Kanji Writing Practice', 'Kanji')
 
 
 def build_page2(doc):
-    """Compact matching exercise with a lettered answer bank."""
+    build_writing_page(doc, 2, TOTAL_PAGES, 'Page 2 — Hiragana Writing Practice', 'Hiragana')
+
+
+def build_page3(doc):
     page_break(doc)
+    add_page_label(doc, 3, TOTAL_PAGES)
 
-    # ── Page header ───────────────────────────────────────────────────────────
-    ph = doc.add_paragraph()
-    ph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    ph.paragraph_format.space_before, ph.paragraph_format.space_after = Pt(0), Pt(2)
-    add_run(ph, 'Student Worksheet  ·  Page 2 of 3', bold=False, size=10, color=GREY)
+    section_banner(doc, 'Page 3 — Match the Number Meanings', bg=TEAL)
 
-    # ── Instructions ─────────────────────────────────────────────────────────
-    heading(doc, 'Instructions — Part 2: Matching')
-    inst_items = [
-        ('1.', 'Look at the kanji and the hiragana reading in each box.'),
+    for n, txt in [
+        ('1.', 'Look at the kanji and hiragana in each box.'),
         ('2.', 'Find the matching English word in the answer bank.'),
-        ('3.', 'Write the correct letter on the blank line for each number.'),
-    ]
-    for n, txt in inst_items:
+        ('3.', 'Write the correct letter on the blank line.'),
+    ]:
         p = doc.add_paragraph()
-        p.paragraph_format.left_indent  = Cm(0.6)
+        p.paragraph_format.left_indent = Cm(0.6)
         p.paragraph_format.space_before = Pt(0)
-        p.paragraph_format.space_after  = Pt(1)
+        p.paragraph_format.space_after = Pt(1)
         add_run(p, f'{n} ', bold=True, size=10, color=TEAL)
         add_run(p, txt, size=10)
 
-    tip_p = doc.add_paragraph()
-    tip_p.paragraph_format.left_indent  = Cm(0.4)
-    tip_p.paragraph_format.space_before = Pt(1)
-    tip_p.paragraph_format.space_after  = Pt(3)
-    add_run(tip_p, 'Tip: ', bold=True, size=10, color=GOLD)
-    add_run(tip_p, 'Numbers 11-19 all start with 十, so spot the ones digit after it.', italic=True, size=10, color=GREY)
-    divider(doc)
-
-    section_banner(doc, 'Part 2 — Match the Number Meanings', bg=TEAL)
-
-    intro = doc.add_paragraph()
-    intro.paragraph_format.space_before = Pt(1)
-    intro.paragraph_format.space_after = Pt(2)
-    add_run(intro, 'Answer bank', bold=True, size=11, color=NAVY)
-    add_run(intro, '  Write the correct letter for each number box below.', size=10, color=DARK)
+    bank_intro = doc.add_paragraph()
+    bank_intro.paragraph_format.space_before = Pt(1)
+    bank_intro.paragraph_format.space_after = Pt(2)
+    add_run(bank_intro, 'Answer bank', bold=True, size=11, color=NAVY)
+    add_run(bank_intro, '  Use the letters below.', size=10, color=DARK)
 
     bank, _answer_lookup = get_matching_bank()
     bank_tbl = doc.add_table(rows=5, cols=4)
@@ -348,51 +326,65 @@ def build_page2(doc):
             add_run(p_body, kanji, bold=True, size=18, color=NAVY)
             add_run(p_body, f'\n{hira}', size=10, color=TEAL)
 
-    doc.add_paragraph().paragraph_format.space_after = Pt(2)
 
-    heading(doc, 'How the Numbers Work', level=2)
+def build_page4(doc):
+    page_break(doc)
+    add_page_label(doc, 4, TOTAL_PAGES)
+
+    section_banner(doc, 'Page 4 — How Japanese Numbers Work', bg=NAVY)
+
     for tip in [
-        '1-10 are the base numbers you memorize first: 一 いち, 二 に, 三 さん, 四 し/よん, 五 ご, 六 ろく, 七 しち/なな, 八 はち, 九 く/きゅう, 十 じゅう.',
-        '11-19 use 十 + the ones digit: 11 = 十一 (じゅういち), 14 = 十四 (じゅうよん), 19 = 十九 (じゅうきゅう).',
-        '20 is 二十 (にじゅう). The same pattern keeps going: 21 = 二十一 (にじゅういち), 35 = 三十五 (さんじゅうご), 99 = 九十九 (きゅうじゅうきゅう), 100 = 百 (ひゃく), 1000 = 千 (せん).',
+        'Base numbers: learn 1-10 first, then build larger numbers from those pieces.',
+        '11-19 use 十 + the ones digit: 十一, 十二, 十三 ... 十九.',
+        '20 and beyond follow the same pattern: 二十, 二十一, 三十五, 九十九, 百, 千.',
     ]:
         pt = doc.add_paragraph()
         pt.paragraph_format.left_indent = Cm(0.6)
         pt.paragraph_format.space_before = Pt(0)
         pt.paragraph_format.space_after = Pt(1)
         add_run(pt, '- ', bold=True, size=10, color=GOLD)
-        add_run(pt, tip, size=8)
+        add_run(pt, tip, size=9)
+
+    ref = doc.add_paragraph()
+    ref.paragraph_format.space_before = Pt(2)
+    ref.paragraph_format.space_after = Pt(2)
+    add_run(ref, 'Reference sheet: 1-20', bold=True, size=11, color=TEAL)
+
+    ref_tbl = doc.add_table(rows=10, cols=2)
+    ref_tbl.style = 'Table Grid'
+    for pair_idx in range(10):
+        for col_idx in range(2):
+            item_idx = pair_idx * 2 + col_idx
+            eng, kanji, hira, _ro, note = MATCH_NUMBERS[item_idx]
+            cell = ref_tbl.rows[pair_idx].cells[col_idx]
+            set_cell_bg(cell, LIGHT if pair_idx % 2 == 0 else WHITE)
+            cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+
+            p_eng = cell.paragraphs[0]
+            p_eng.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p_eng.paragraph_format.space_before = Pt(2)
+            p_eng.paragraph_format.space_after = Pt(0)
+            add_run(p_eng, eng.split('—')[-1].strip(), bold=True, size=10, color=DARK)
+
+            p_body = cell.add_paragraph()
+            p_body.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p_body.paragraph_format.space_before = Pt(0)
+            p_body.paragraph_format.space_after = Pt(2)
+            add_run(p_body, kanji, bold=True, size=16, color=NAVY)
+            add_run(p_body, f'\n{hira}', size=10, color=TEAL)
+            if note:
+                add_run(p_body, f'\n{note}', italic=True, size=7, color=GREY)
 
 
-def build_page3(doc):
-    """Answer key — teacher copy."""
+def build_page5(doc):
     page_break(doc)
+    add_page_label(doc, 5, TOTAL_PAGES, 'Answer Key — Teacher Copy')
 
-    # ── Answer key banner ─────────────────────────────────────────────────────
-    tbl = doc.add_table(rows=2, cols=1)
-    tbl.style = 'Table Grid'
-    ra0 = tbl.rows[0].cells[0]
-    set_cell_bg(ra0, DARK)
-    ra0.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-    pa0 = ra0.paragraphs[0]
-    pa0.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    pa0.paragraph_format.space_before, pa0.paragraph_format.space_after = Pt(5), Pt(2)
-    add_run(pa0, 'Answer Key — Teacher Copy', bold=True, size=16, color=WHITE)
-    add_run(pa0, '\nPage 3 of 3', bold=False, size=11, color=GOLD)
-    ra1 = tbl.rows[1].cells[0]
-    set_cell_bg(ra1, GOLD)
-    pa1 = ra1.paragraphs[0]
-    pa1.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    pa1.paragraph_format.space_before, pa1.paragraph_format.space_after = Pt(2), Pt(2)
-    add_run(pa1, 'For teacher use only — do not distribute to students', bold=False, size=9, color=DARK)
-    doc.add_paragraph().paragraph_format.space_after = Pt(2)
+    section_banner(doc, 'Page 5 — Writing Answer Key', bg=DARK)
 
-    # ── Part 1 answers ────────────────────────────────────────────────────────
-    heading(doc, 'Part 1 — Write the Numbers (Answers)')
-
-    atbl = doc.add_table(rows=1, cols=5)
+    atbl = doc.add_table(rows=1, cols=4)
     atbl.style = 'Table Grid'
-    for i, col_label in enumerate(['#', 'English', 'Kanji', 'Hiragana', 'Romaji']):
+    for i, col_label in enumerate(['#', 'English', 'Kanji', 'Hiragana']):
         c = atbl.rows[0].cells[i]
         set_cell_bg(c, NAVY)
         c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
@@ -401,15 +393,14 @@ def build_page3(doc):
         p.paragraph_format.space_before = p.paragraph_format.space_after = Pt(2)
         add_run(p, col_label, bold=True, size=10, color=WHITE)
 
-    for row_i, (eng, kanji, hira, romaji, note) in enumerate(NUMBERS):
+    for row_i, (eng, kanji, hira, _ro, note) in enumerate(NUMBERS):
         row = atbl.add_row()
-        bg  = LIGHT if row_i % 2 == 0 else WHITE
+        bg = LIGHT if row_i % 2 == 0 else WHITE
         for ci, (val, clr, sz, bld) in enumerate([
             (str(row_i + 1), GREY,  9,  False),
             (eng,            DARK,  10, False),
             (kanji,          TEAL,  13, True),
             (hira,           NAVY,  10, False),
-            (romaji,         DARK,  9,  False),
         ]):
             c = row.cells[ci]
             set_cell_bg(c, bg)
@@ -419,23 +410,21 @@ def build_page3(doc):
             if ci == 2:
                 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
             add_run(p, val, bold=bld, size=sz, color=clr)
-        # Note in last cell if present
         if note:
-            p.add_run('')  # keep existing cell
-            c_note = row.cells[4]
-            p_note = c_note.paragraphs[0]
-            add_run(p_note, f'  ★ {note}', italic=True, size=8, color=GREY)
+            p_note = row.cells[3].paragraphs[0]
+            add_run(p_note, f'\n★ {note}', italic=True, size=8, color=GREY)
 
-    doc.add_paragraph().paragraph_format.space_after = Pt(4)
-    divider(doc)
 
-    # ── Part 2 matching answers ───────────────────────────────────────────────
-    heading(doc, 'Part 2 — Matching Answers')
+def build_page6(doc):
+    page_break(doc)
+    add_page_label(doc, 6, TOTAL_PAGES, 'Answer Key — Teacher Copy')
+
+    section_banner(doc, 'Page 6 — Matching Answer Key', bg=TEAL)
 
     _, answer_lookup = get_matching_bank()
     mtbl = doc.add_table(rows=1, cols=5)
     mtbl.style = 'Table Grid'
-    for i, col_label in enumerate(['#', 'Kanji', 'Reading', 'Letter', 'English']):
+    for i, col_label in enumerate(['#', 'Kanji', 'Hiragana', 'Letter', 'English']):
         c = mtbl.rows[0].cells[i]
         set_cell_bg(c, TEAL)
         c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
@@ -446,14 +435,14 @@ def build_page3(doc):
 
     for row_i, (eng, kanji, hira, _ro, _note) in enumerate(MATCH_NUMBERS):
         row = mtbl.add_row()
-        bg  = MINT if row_i % 2 == 0 else WHITE
+        bg = MINT if row_i % 2 == 0 else WHITE
         eng_display = eng.split('—')[-1].strip()
         for ci, (val, clr, sz, bld) in enumerate([
-            (str(row_i + 1),         GREY,  9,  True),
-            (kanji,                  TEAL, 14, True),
-            (hira,                   NAVY, 10, False),
-            (answer_lookup[eng],     TEAL, 10, True),
-            (eng_display,            DARK, 10, False),
+            (str(row_i + 1),     GREY,  9,  True),
+            (kanji,              TEAL, 14, True),
+            (hira,               NAVY, 10, False),
+            (answer_lookup[eng], TEAL, 10, True),
+            (eng_display,        DARK, 10, False),
         ]):
             c = row.cells[ci]
             set_cell_bg(c, bg)
@@ -463,24 +452,42 @@ def build_page3(doc):
             p.paragraph_format.space_before = p.paragraph_format.space_after = Pt(3)
             add_run(p, val, bold=bld, size=sz, color=clr)
 
-    doc.add_paragraph().paragraph_format.space_after = Pt(4)
-    divider(doc)
 
-    # ── Teacher activity suggestions ──────────────────────────────────────────
-    heading(doc, "Teacher's Notes & Suggested Activities")
-    for title, desc in [
-        ('Counting drill (5 min)',       'Count aloud 1–20 as a class, then backwards in pairs.'),
-        ('Flash cards (10 min)',          'Show a kanji card; students call out the English or hiragana reading.'),
-        ('Pattern discovery (5 min)',    'Write 11–19 on board; ask students to spot the pattern (十 + digit).'),
-        ('Matching check (pair work)',   'Partners compare answer letters and explain how they matched each number.'),
-        ('Extension — bigger numbers',  'Introduce 万 (man = 10,000) for advanced students.'),
-    ]:
-        pa = doc.add_paragraph()
-        pa.paragraph_format.left_indent  = Cm(0.6)
-        pa.paragraph_format.space_before = Pt(1)
-        pa.paragraph_format.space_after  = Pt(1)
-        add_run(pa, f'{title}: ', bold=True,  size=10, color=NAVY)
-        add_run(pa, desc,         bold=False, size=10, color=DARK)
+def build_page7(doc):
+    page_break(doc)
+    add_page_label(doc, 7, TOTAL_PAGES, 'Teacher Notes')
+
+    section_banner(doc, "Page 7 — Teacher Notes & Activities", bg=NAVY)
+
+    intro = doc.add_paragraph()
+    intro.paragraph_format.space_before = Pt(1)
+    intro.paragraph_format.space_after = Pt(2)
+    add_run(intro, 'Use this page as the teaching guide for the student worksheet.', size=10)
+
+    notes_tbl = doc.add_table(rows=3, cols=2)
+    notes_tbl.style = 'Table Grid'
+    note_items = [
+        ('Counting drill', 'Count 1-20 aloud as a class, then backwards in pairs.'),
+        ('Kanji dictation', 'Say the English number and have students write only the kanji page first.'),
+        ('Hiragana check', 'Repeat the same numbers and have students fill the hiragana page separately.'),
+        ('Pattern discovery', 'Write 11-19 on the board and ask students what 十 is doing in each number.'),
+        ('Matching review', 'Partners compare answer letters and explain how they matched each item.'),
+        ('Extension', 'After 20, introduce 二十一, 三十五, 百, and 千 as pattern extensions.'),
+    ]
+    for idx, (title, desc) in enumerate(note_items):
+        row_idx = idx // 2
+        col_idx = idx % 2
+        cell = notes_tbl.rows[row_idx].cells[col_idx]
+        set_cell_bg(cell, LIGHT if row_idx % 2 == 0 else WHITE)
+        cell.vertical_alignment = WD_ALIGN_VERTICAL.TOP
+        p = cell.paragraphs[0]
+        p.paragraph_format.space_before = Pt(2)
+        p.paragraph_format.space_after = Pt(1)
+        add_run(p, title, bold=True, size=11, color=NAVY)
+        p2 = cell.add_paragraph()
+        p2.paragraph_format.space_before = Pt(0)
+        p2.paragraph_format.space_after = Pt(2)
+        add_run(p2, desc, size=9, color=DARK)
 
 
 # ── Entry point ────────────────────────────────────────────────────────────────
@@ -496,6 +503,10 @@ def main():
     build_page1(doc)
     build_page2(doc)
     build_page3(doc)
+    build_page4(doc)
+    build_page5(doc)
+    build_page6(doc)
+    build_page7(doc)
 
     out = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'japanese_numbers_worksheet.docx')
     doc.save(out)
