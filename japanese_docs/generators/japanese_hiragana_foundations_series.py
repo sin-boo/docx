@@ -21,7 +21,7 @@ MINT  = RGBColor(0xD4, 0xF1, 0xF4)
 
 WORKSHEETS = [
     {
-        "slug": "hiragana_set_01_vowels_worksheet.docx",
+        "slug": "hira_01_vowels.docx",
         "title": "Hiragana Set 1 — Vowels",
         "subtitle": "あ い う え お",
         "focus": "Learn the five basic vowel sounds. These vowels appear in almost every Japanese word.",
@@ -40,7 +40,7 @@ WORKSHEETS = [
         ],
     },
     {
-        "slug": "hiragana_set_02_k_row_worksheet.docx",
+        "slug": "hira_02_k_row.docx",
         "title": "Hiragana Set 2 — K Row",
         "subtitle": "か き く け こ",
         "focus": "Keep the k sound the same and change only the vowel after it.",
@@ -59,7 +59,7 @@ WORKSHEETS = [
         ],
     },
     {
-        "slug": "hiragana_set_03_s_row_worksheet.docx",
+        "slug": "hira_03_s_row.docx",
         "title": "Hiragana Set 3 — S Row",
         "subtitle": "さ し す せ そ",
         "focus": "The s row introduces し, which sounds like shi instead of si.",
@@ -78,7 +78,7 @@ WORKSHEETS = [
         ],
     },
     {
-        "slug": "hiragana_set_04_t_row_worksheet.docx",
+        "slug": "hira_04_t_row.docx",
         "title": "Hiragana Set 4 — T Row",
         "subtitle": "た ち つ て と",
         "focus": "The t row has two special sounds: ち = chi and つ = tsu.",
@@ -97,7 +97,7 @@ WORKSHEETS = [
         ],
     },
     {
-        "slug": "hiragana_set_05_n_row_worksheet.docx",
+        "slug": "hira_05_n_row.docx",
         "title": "Hiragana Set 5 — N Row",
         "subtitle": "な に ぬ ね の",
         "focus": "This row is regular and is good for building reading confidence.",
@@ -116,7 +116,7 @@ WORKSHEETS = [
         ],
     },
     {
-        "slug": "hiragana_set_06_h_row_worksheet.docx",
+        "slug": "hira_06_h_row.docx",
         "title": "Hiragana Set 6 — H Row",
         "subtitle": "は ひ ふ へ ほ",
         "focus": "The h row is mostly regular, but ふ sounds like fu instead of hu.",
@@ -135,7 +135,7 @@ WORKSHEETS = [
         ],
     },
     {
-        "slug": "hiragana_set_07_m_row_worksheet.docx",
+        "slug": "hira_07_m_row.docx",
         "title": "Hiragana Set 7 — M Row",
         "subtitle": "ま み む め も",
         "focus": "The m row is regular and easy to blend into simple syllable pairs.",
@@ -154,7 +154,7 @@ WORKSHEETS = [
         ],
     },
     {
-        "slug": "hiragana_set_08_y_row_worksheet.docx",
+        "slug": "hira_08_y_row.docx",
         "title": "Hiragana Set 8 — Y Row",
         "subtitle": "や ゆ よ",
         "focus": "The y row has only three kana, so students can focus on hearing the vowel clearly.",
@@ -171,7 +171,7 @@ WORKSHEETS = [
         ],
     },
     {
-        "slug": "hiragana_set_09_r_row_worksheet.docx",
+        "slug": "hira_09_r_row.docx",
         "title": "Hiragana Set 9 — R Row",
         "subtitle": "ら り る れ ろ",
         "focus": "The Japanese r sound is light, somewhere between English r, l, and d.",
@@ -190,7 +190,7 @@ WORKSHEETS = [
         ],
     },
     {
-        "slug": "hiragana_set_10_w_n_worksheet.docx",
+        "slug": "hira_10_w_n.docx",
         "title": "Hiragana Set 10 — W Row and ん",
         "subtitle": "わ を ん",
         "focus": "This worksheet introduces the last basic kana in the beginner chart.",
