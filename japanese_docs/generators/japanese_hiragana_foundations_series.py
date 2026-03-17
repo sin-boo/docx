@@ -1,4 +1,3 @@
-import math
 import os
 from docx import Document
 from docx.shared import Pt, RGBColor, Inches, Cm
@@ -412,54 +411,7 @@ def build_page1(doc, config):
             add_run(p, val, bold=bld, size=sz, color=clr)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(1)
-    section_banner(doc, 'Part 1 — Copy the Kana', bg=NAVY)
-
-    copy_intro = doc.add_paragraph()
-    copy_intro.paragraph_format.space_before = Pt(1)
-    copy_intro.paragraph_format.space_after = Pt(2)
-    examples = ', '.join(f'{kana} = {sound}' for kana, sound, _tip in config['kana'][:3])
-    add_run(copy_intro, 'Look at each kana. ', size=10, color=DARK)
-    add_run(copy_intro, 'Say the sound out loud first', bold=True, size=10, color=TEAL)
-    add_run(copy_intro, ' and focus on ', size=10, color=DARK)
-    add_run(copy_intro, 'how it sounds', bold=True, size=10, color=NAVY)
-    add_run(copy_intro, ', not on describing the symbol. ', size=10, color=DARK)
-    add_run(copy_intro, 'Then copy the kana itself', bold=True, size=10, color=TEAL)
-    add_run(copy_intro, ' on both blank lines.', size=10, color=DARK)
-    add_run(copy_intro, ' Example: ', bold=True, size=10, color=GOLD)
-    add_run(copy_intro, examples, italic=True, size=10, color=GREY)
-
-    copy_tbl = doc.add_table(rows=math.ceil(len(config['kana']) / 2), cols=2)
-    copy_tbl.style = 'Table Grid'
-    copy_tbl.autofit = False
-    for row in copy_tbl.rows:
-        for cell in row.cells:
-            cell.width = Inches(4.0)
-            cell.vertical_alignment = WD_ALIGN_VERTICAL.TOP
-
-    for idx, (kana, _sound, _tip) in enumerate(config['kana']):
-        row_idx = idx // 2
-        col_idx = idx % 2
-        cell = copy_tbl.rows[row_idx].cells[col_idx]
-        set_cell_bg(cell, MINT if row_idx % 2 == 0 else WHITE)
-        p0 = cell.paragraphs[0]
-        p0.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p0.paragraph_format.space_before = Pt(2)
-        p0.paragraph_format.space_after = Pt(0)
-        add_run(p0, kana, bold=True, size=20, color=NAVY)
-
-        for line_no in range(1, 3):
-            pl = cell.add_paragraph()
-            pl.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            pl.paragraph_format.space_before = Pt(0)
-            pl.paragraph_format.space_after = Pt(0)
-            add_run(pl, f'Copy {line_no}: ', bold=True, size=8, color=TEAL)
-            add_run(pl, '_' * 15, size=9, color=DARK)
-
-    if len(config['kana']) % 2 == 1:
-        copy_tbl.rows[-1].cells[-1].text = ''
-
-    doc.add_paragraph().paragraph_format.space_after = Pt(1)
-    section_banner(doc, 'Part 2 — Match the Sound', bg=TEAL)
+    section_banner(doc, 'Part 1 — Match the Sound', bg=TEAL)
     bank, _answer_lookup = build_sound_bank(config['kana'])
 
     bank_tbl = doc.add_table(rows=1, cols=len(bank))
@@ -503,7 +455,7 @@ def build_page1(doc, config):
 def build_page2(doc, config):
     page_break(doc)
     add_page_label(doc, 'Reference & Answer Key  ·  Page 2 of 2')
-    section_banner(doc, 'Part 3 — Read and Check', bg=DARK)
+    section_banner(doc, 'Part 2 — Read and Check', bg=DARK)
 
     intro = doc.add_paragraph()
     intro.paragraph_format.space_before = Pt(1)
@@ -539,7 +491,7 @@ def build_page2(doc, config):
             add_run(p, val, bold=bld, size=sz, color=clr)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(1)
-    section_banner(doc, 'Part 2 Answer Key', bg=TEAL)
+    section_banner(doc, 'Part 1 Answer Key', bg=TEAL)
     bank, answer_lookup = build_sound_bank(config['kana'])
 
     answer_tbl = doc.add_table(rows=len(config['kana']) + 1, cols=3)
