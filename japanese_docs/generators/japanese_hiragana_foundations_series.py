@@ -295,21 +295,67 @@ def add_info_row(doc):
     doc.add_paragraph().paragraph_format.space_after = Pt(1)
 
 
-def build_sound_bank(kana_items):
-    rotated = kana_items[1:] + kana_items[:1]
-    bank = []
-    answer_lookup = {}
-    for idx, (_, sound, _tip) in enumerate(rotated):
-        label = chr(ord('A') + idx)
-        bank.append((label, sound))
-    for original, (_, sound, _tip) in zip(kana_items, kana_items):
-        pass
-    for label, sound in bank:
-        for kana, item_sound, _tip in kana_items:
-            if item_sound == sound:
-                answer_lookup[kana] = label
-                break
-    return bank, answer_lookup
+def get_fill_in_prompts(config):
+    kana = [item[0] for item in config['kana']]
+    if len(kana) >= 5:
+        return [
+            (f"{kana[0]}  __  {kana[2]}  __  {kana[4]}", f"{kana[1]}, {kana[3]}"),
+            (f"__  {kana[1]}  __  {kana[3]}  __", f"{kana[0]}, {kana[2]}, {kana[4]}"),
+        ]
+    return [
+        (f"{kana[0]}  __  {kana[2]}", kana[1]),
+        (f"__  {kana[1]}  __", f"{kana[0]}, {kana[2]}"),
+    ]
+
+
+def get_distractors(config):
+    current = {kana for kana, _sound, _tip in config['kana']}
+    idx = WORKSHEETS.index(config)
+    candidates = []
+
+    if idx > 0:
+        candidates.extend(kana for kana, _sound, _tip in WORKSHEETS[idx - 1]['kana'])
+    if idx + 1 < len(WORKSHEETS):
+        candidates.extend(kana for kana, _sound, _tip in WORKSHEETS[idx + 1]['kana'])
+
+    candidates.extend(
+        kana
+        for worksheet in WORKSHEETS
+        for kana, _sound, _tip in worksheet['kana']
+        if kana not in current
+    )
+
+    unique = []
+    for kana in candidates:
+        if kana not in current and kana not in unique:
+            unique.append(kana)
+    return unique[:3]
+
+
+def get_odd_one_out_prompts(config):
+    kana = [item[0] for item in config['kana']]
+    distractors = get_distractors(config)
+    if len(kana) >= 5:
+        return [
+            ([distractors[0], kana[0], kana[1], kana[2]], distractors[0]),
+            ([kana[1], distractors[1], kana[2], kana[3]], distractors[1]),
+            ([kana[2], kana[3], distractors[2], kana[4]], distractors[2]),
+        ]
+    return [
+        ([distractors[0], kana[0], kana[1], kana[2]], distractors[0]),
+        ([kana[0], distractors[1], kana[1], kana[2]], distractors[1]),
+        ([kana[0], kana[1], distractors[2], kana[2]], distractors[2]),
+    ]
+
+
+def get_worked_examples(config):
+    examples = [
+        (config['kana'][0][0], config['kana'][0][1]),
+        (config['pairs'][0][0], config['pairs'][0][1]),
+    ]
+    fill_prompt, fill_answer = get_fill_in_prompts(config)[0]
+    examples.append((fill_prompt, fill_answer))
+    return examples
 
 
 def get_row_pattern_note(config):
@@ -364,14 +410,14 @@ def build_page1(doc, config):
     build_header(doc, config)
     add_info_row(doc)
 
-    heading(doc, 'What you are learning')
+    heading(doc, 'How this set works')
     for tip in [
         f"This worksheet focuses on the set: {config['subtitle']}.",
         "Each hiragana letter stands for one sound chunk or beat. Read one kana smoothly instead of spelling it out like separate English letters.",
         config['focus'],
         get_row_pattern_note(config),
         get_special_sound_note(config),
-        "Say the sound, copy the kana, then match the kana to the correct sound hint.",
+        "You will do two activities: write the reading from memory, then use row-pattern practice to check if you really know the set.",
     ]:
         p = doc.add_paragraph(style='List Bullet')
         p.paragraph_format.left_indent = Cm(0.6)
@@ -379,11 +425,42 @@ def build_page1(doc, config):
         p.paragraph_format.space_after = Pt(1)
         add_run(p, tip, size=10)
 
-    section_banner(doc, 'Sound Guide', bg=TEAL)
-    guide_tbl = doc.add_table(rows=len(config['kana']) + 1, cols=3)
-    guide_tbl.style = 'Table Grid'
-    for ci, label in enumerate(['Kana', 'Sound', 'Beginner tip']):
-        c = guide_tbl.rows[0].cells[ci]
+    doc.add_paragraph().paragraph_format.space_after = Pt(1)
+    section_banner(doc, 'Worked Examples', bg=GOLD)
+    examples_tbl = doc.add_table(rows=1, cols=3)
+    examples_tbl.style = 'Table Grid'
+    for idx, (prompt, answer) in enumerate(get_worked_examples(config)):
+        cell = examples_tbl.rows[0].cells[idx]
+        set_cell_bg(cell, LIGHT)
+        cell.vertical_alignment = WD_ALIGN_VERTICAL.TOP
+        p = cell.paragraphs[0]
+        p.paragraph_format.space_before = Pt(2)
+        p.paragraph_format.space_after = Pt(1)
+        add_run(p, 'Example', bold=True, size=9, color=TEAL)
+        p2 = cell.add_paragraph()
+        p2.paragraph_format.space_before = Pt(0)
+        p2.paragraph_format.space_after = Pt(0)
+        add_run(p2, prompt, bold=True, size=11, color=NAVY)
+        p3 = cell.add_paragraph()
+        p3.paragraph_format.space_before = Pt(0)
+        p3.paragraph_format.space_after = Pt(2)
+        add_run(p3, f'Answer: {answer}', size=9, color=DARK)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(1)
+    section_banner(doc, 'Activity 1 — Write the Reading', bg=TEAL)
+
+    act1_intro = doc.add_paragraph()
+    act1_intro.paragraph_format.space_before = Pt(1)
+    act1_intro.paragraph_format.space_after = Pt(2)
+    add_run(act1_intro, 'Look at each kana and ', size=10, color=DARK)
+    add_run(act1_intro, 'write its reading in romaji', bold=True, size=10, color=TEAL)
+    add_run(act1_intro, '. Example: ', size=10, color=DARK)
+    add_run(act1_intro, f"{config['kana'][0][0]} = {config['kana'][0][1]}", bold=True, size=10, color=NAVY)
+
+    reading_tbl = doc.add_table(rows=len(config['kana']) + 1, cols=3)
+    reading_tbl.style = 'Table Grid'
+    for ci, label in enumerate(['#', 'Kana', 'Your reading']):
+        c = reading_tbl.rows[0].cells[ci]
         set_cell_bg(c, NAVY)
         c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
         p = c.paragraphs[0]
@@ -392,70 +469,91 @@ def build_page1(doc, config):
         p.paragraph_format.space_after = Pt(2)
         add_run(p, label, bold=True, size=10, color=WHITE)
 
-    for row_i, (kana, sound, tip) in enumerate(config['kana'], 1):
-        bg = LIGHT if row_i % 2 == 1 else WHITE
-        row = guide_tbl.rows[row_i]
-        for ci, (val, clr, sz, bld) in enumerate([
+    for idx, (kana, _sound, _tip) in enumerate(config['kana'], 1):
+        row = reading_tbl.rows[idx]
+        bg = LIGHT if idx % 2 == 1 else WHITE
+        vals = [
+            (str(idx), GREY, 9, True),
             (kana, NAVY, 14, True),
-            (sound, TEAL, 11, True),
-            (tip, DARK, 9, False),
-        ]):
+            ('__________________', DARK, 10, False),
+        ]
+        for ci, (val, clr, sz, bld) in enumerate(vals):
             c = row.cells[ci]
             set_cell_bg(c, bg)
             c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
             p = c.paragraphs[0]
             p.paragraph_format.space_before = Pt(2)
             p.paragraph_format.space_after = Pt(2)
-            if ci < 2:
-                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
             add_run(p, val, bold=bld, size=sz, color=clr)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(1)
-    section_banner(doc, 'Part 1 — Match the Sound', bg=TEAL)
-    bank, _answer_lookup = build_sound_bank(config['kana'])
+    section_banner(doc, 'Activity 2 — Pattern Practice', bg=NAVY)
 
-    bank_tbl = doc.add_table(rows=1, cols=len(bank))
-    bank_tbl.style = 'Table Grid'
-    for idx, (label, sound) in enumerate(bank):
-        cell = bank_tbl.rows[0].cells[idx]
-        set_cell_bg(cell, LIGHT)
-        cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-        p = cell.paragraphs[0]
+    act2_intro = doc.add_paragraph()
+    act2_intro.paragraph_format.space_before = Pt(1)
+    act2_intro.paragraph_format.space_after = Pt(2)
+    add_run(act2_intro, 'Use the row pattern to help you. ', size=10, color=DARK)
+    add_run(act2_intro, 'Fill in the missing kana', bold=True, size=10, color=TEAL)
+    add_run(act2_intro, ' and ', size=10, color=DARK)
+    add_run(act2_intro, 'circle the one that does not belong', bold=True, size=10, color=NAVY)
+    add_run(act2_intro, '.', size=10, color=DARK)
+
+    fill_tbl = doc.add_table(rows=len(get_fill_in_prompts(config)) + 1, cols=2)
+    fill_tbl.style = 'Table Grid'
+    for ci, label in enumerate(['Fill in the missing kana', 'Your answer']):
+        c = fill_tbl.rows[0].cells[ci]
+        set_cell_bg(c, TEAL)
+        c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+        p = c.paragraphs[0]
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.paragraph_format.space_before = Pt(2)
         p.paragraph_format.space_after = Pt(2)
-        add_run(p, f'{label}. ', bold=True, size=10, color=TEAL)
-        add_run(p, sound, size=9, color=DARK)
+        add_run(p, label, bold=True, size=10, color=WHITE)
 
-    match_tbl = doc.add_table(rows=len(config['kana']), cols=2)
-    match_tbl.style = 'Table Grid'
-    for idx, (kana, _sound, _tip) in enumerate(config['kana']):
-        bg = LIGHT if idx % 2 == 0 else WHITE
-        row = match_tbl.rows[idx]
-        left = row.cells[0]
-        right = row.cells[1]
-        set_cell_bg(left, bg)
-        set_cell_bg(right, bg)
-        left.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-        right.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+    for idx, (prompt, _answer) in enumerate(get_fill_in_prompts(config), 1):
+        row = fill_tbl.rows[idx]
+        bg = LIGHT if idx % 2 == 1 else WHITE
+        for ci, val in enumerate([prompt, '__________________']):
+            c = row.cells[ci]
+            set_cell_bg(c, bg)
+            c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            p = c.paragraphs[0]
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_before = Pt(2)
+            p.paragraph_format.space_after = Pt(2)
+            add_run(p, val, size=10 if ci == 1 else 12, color=DARK if ci == 1 else NAVY, bold=(ci == 0))
 
-        p_left = left.paragraphs[0]
-        p_left.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p_left.paragraph_format.space_before = Pt(2)
-        p_left.paragraph_format.space_after = Pt(2)
-        add_run(p_left, kana, bold=True, size=14, color=NAVY)
+    odd_tbl = doc.add_table(rows=len(get_odd_one_out_prompts(config)) + 1, cols=2)
+    odd_tbl.style = 'Table Grid'
+    for ci, label in enumerate(['Circle the kana that does not belong', 'Your answer']):
+        c = odd_tbl.rows[0].cells[ci]
+        set_cell_bg(c, NAVY)
+        c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+        p = c.paragraphs[0]
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(2)
+        p.paragraph_format.space_after = Pt(2)
+        add_run(p, label, bold=True, size=10, color=WHITE)
 
-        p_right = right.paragraphs[0]
-        p_right.paragraph_format.space_before = Pt(2)
-        p_right.paragraph_format.space_after = Pt(2)
-        add_run(p_right, 'Letter: ', bold=True, size=10, color=TEAL)
-        add_run(p_right, '____', size=10, color=DARK)
+    for idx, (prompt_items, _answer) in enumerate(get_odd_one_out_prompts(config), 1):
+        row = odd_tbl.rows[idx]
+        bg = MINT if idx % 2 == 1 else WHITE
+        for ci, val in enumerate(['   '.join(prompt_items), '________']):
+            c = row.cells[ci]
+            set_cell_bg(c, bg)
+            c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            p = c.paragraphs[0]
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_before = Pt(2)
+            p.paragraph_format.space_after = Pt(2)
+            add_run(p, val, size=10 if ci == 1 else 12, color=DARK if ci == 1 else NAVY, bold=(ci == 0))
 
 
 def build_page2(doc, config):
     page_break(doc)
     add_page_label(doc, 'Reference & Answer Key  ·  Page 2 of 2')
-    section_banner(doc, 'Part 2 — Read and Check', bg=DARK)
+    section_banner(doc, 'Reference & Answer Key', bg=DARK)
 
     intro = doc.add_paragraph()
     intro.paragraph_format.space_before = Pt(1)
@@ -491,12 +589,11 @@ def build_page2(doc, config):
             add_run(p, val, bold=bld, size=sz, color=clr)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(1)
-    section_banner(doc, 'Part 1 Answer Key', bg=TEAL)
-    bank, answer_lookup = build_sound_bank(config['kana'])
+    section_banner(doc, 'Activity 1 Answers', bg=TEAL)
 
-    answer_tbl = doc.add_table(rows=len(config['kana']) + 1, cols=3)
+    answer_tbl = doc.add_table(rows=len(config['kana']) + 1, cols=2)
     answer_tbl.style = 'Table Grid'
-    for ci, label in enumerate(['Kana', 'Correct letter', 'Sound']):
+    for ci, label in enumerate(['Kana', 'Reading']):
         c = answer_tbl.rows[0].cells[ci]
         set_cell_bg(c, TEAL)
         c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
@@ -511,7 +608,6 @@ def build_page2(doc, config):
         row = answer_tbl.rows[idx]
         for ci, (val, clr, sz, bld) in enumerate([
             (kana, NAVY, 13, True),
-            (answer_lookup[kana], TEAL, 10, True),
             (sound, DARK, 10, False),
         ]):
             c = row.cells[ci]
@@ -522,6 +618,79 @@ def build_page2(doc, config):
             p.paragraph_format.space_before = Pt(2)
             p.paragraph_format.space_after = Pt(2)
             add_run(p, val, bold=bld, size=sz, color=clr)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(1)
+    section_banner(doc, 'Activity 2 Answers', bg=NAVY)
+
+    fill_answer_tbl = doc.add_table(rows=len(get_fill_in_prompts(config)) + 1, cols=2)
+    fill_answer_tbl.style = 'Table Grid'
+    for ci, label in enumerate(['Fill in the missing kana', 'Answer']):
+        c = fill_answer_tbl.rows[0].cells[ci]
+        set_cell_bg(c, NAVY)
+        c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+        p = c.paragraphs[0]
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(2)
+        p.paragraph_format.space_after = Pt(2)
+        add_run(p, label, bold=True, size=10, color=WHITE)
+
+    for idx, (prompt, answer) in enumerate(get_fill_in_prompts(config), 1):
+        bg = LIGHT if idx % 2 == 1 else WHITE
+        row = fill_answer_tbl.rows[idx]
+        for ci, (val, clr, sz, bld) in enumerate([
+            (prompt, NAVY, 11, True),
+            (answer, DARK, 10, False),
+        ]):
+            c = row.cells[ci]
+            set_cell_bg(c, bg)
+            c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            p = c.paragraphs[0]
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_before = Pt(2)
+            p.paragraph_format.space_after = Pt(2)
+            add_run(p, val, bold=bld, size=sz, color=clr)
+
+    odd_answer_tbl = doc.add_table(rows=len(get_odd_one_out_prompts(config)) + 1, cols=2)
+    odd_answer_tbl.style = 'Table Grid'
+    for ci, label in enumerate(['Circle the kana that does not belong', 'Answer']):
+        c = odd_answer_tbl.rows[0].cells[ci]
+        set_cell_bg(c, TEAL)
+        c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+        p = c.paragraphs[0]
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(2)
+        p.paragraph_format.space_after = Pt(2)
+        add_run(p, label, bold=True, size=10, color=WHITE)
+
+    for idx, (prompt_items, answer) in enumerate(get_odd_one_out_prompts(config), 1):
+        bg = MINT if idx % 2 == 1 else WHITE
+        row = odd_answer_tbl.rows[idx]
+        for ci, (val, clr, sz, bld) in enumerate([
+            ('   '.join(prompt_items), NAVY, 11, True),
+            (answer, DARK, 10, False),
+        ]):
+            c = row.cells[ci]
+            set_cell_bg(c, bg)
+            c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            p = c.paragraphs[0]
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_before = Pt(2)
+            p.paragraph_format.space_after = Pt(2)
+            add_run(p, val, bold=bld, size=sz, color=clr)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(1)
+    heading(doc, 'Important reminders', level=2)
+    for tip in [
+        'One hiragana usually represents one sound beat.',
+        'Most rows follow the vowel order a, i, u, e, o, even when one sound is slightly irregular.',
+        'If a row has a special reading, say it slowly first and then return to the full row pattern.',
+    ]:
+        p = doc.add_paragraph()
+        p.paragraph_format.left_indent = Cm(0.6)
+        p.paragraph_format.space_before = Pt(0)
+        p.paragraph_format.space_after = Pt(1)
+        add_run(p, '▸ ', bold=True, size=10, color=GOLD)
+        add_run(p, tip, size=10, color=DARK)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(1)
     heading(doc, 'How to study this set', level=2)
