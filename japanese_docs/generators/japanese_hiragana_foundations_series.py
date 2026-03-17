@@ -417,6 +417,7 @@ def build_page1(doc, config):
     copy_intro = doc.add_paragraph()
     copy_intro.paragraph_format.space_before = Pt(1)
     copy_intro.paragraph_format.space_after = Pt(2)
+    examples = ', '.join(f'{kana} = {sound}' for kana, sound, _tip in config['kana'][:3])
     add_run(copy_intro, 'Look at each kana. ', size=10, color=DARK)
     add_run(copy_intro, 'Say the sound out loud first', bold=True, size=10, color=TEAL)
     add_run(copy_intro, ' and focus on ', size=10, color=DARK)
@@ -424,6 +425,8 @@ def build_page1(doc, config):
     add_run(copy_intro, ', not on describing the symbol. ', size=10, color=DARK)
     add_run(copy_intro, 'Then copy the kana itself', bold=True, size=10, color=TEAL)
     add_run(copy_intro, ' on both blank lines.', size=10, color=DARK)
+    add_run(copy_intro, ' Example: ', bold=True, size=10, color=GOLD)
+    add_run(copy_intro, examples, italic=True, size=10, color=GREY)
 
     copy_tbl = doc.add_table(rows=math.ceil(len(config['kana']) / 2), cols=2)
     copy_tbl.style = 'Table Grid'
