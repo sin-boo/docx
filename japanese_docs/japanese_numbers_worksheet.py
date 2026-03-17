@@ -225,11 +225,14 @@ def build_page1(doc):
 
     part1_tbl = doc.add_table(rows=(len(NUMBERS) + 1) // 2, cols=2)
     part1_tbl.style = 'Table Grid'
+    part1_tbl.autofit = False
+    part1_col_width = Cm(8.3)
 
     for row_idx, row in enumerate(part1_tbl.rows):
         for col_idx, cell in enumerate(row.cells):
             item_idx = row_idx * 2 + col_idx
             remove_cell_borders(cell)
+            cell.width = part1_col_width
             set_cell_bg(cell, LIGHT if row_idx % 2 == 0 else WHITE)
             cell.vertical_alignment = WD_ALIGN_VERTICAL.TOP
 
