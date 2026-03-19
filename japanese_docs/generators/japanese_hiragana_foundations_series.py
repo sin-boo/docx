@@ -427,7 +427,7 @@ def build_header(doc, config):
     p1.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p1.paragraph_format.space_before = Pt(3)
     p1.paragraph_format.space_after = Pt(3)
-    add_run(p1, 'Student Worksheet  ·  Page 1 of 2', size=10, color=WHITE)
+    add_run(p1, 'Student Worksheet  ·  Page 1 of 3', size=10, color=WHITE)
     doc.add_paragraph().paragraph_format.space_after = Pt(1)
 
 
@@ -513,6 +513,11 @@ def build_page1(doc, config):
             p.paragraph_format.space_after = Pt(1)
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
             add_run(p, val, bold=bld, size=(8 if ci != 1 else 12), color=clr)
+
+
+def build_page2(doc, config):
+    page_break(doc)
+    add_page_label(doc, 'Student Worksheet  ·  Page 2 of 3')
 
     doc.add_paragraph().paragraph_format.space_after = Pt(0)
     section_banner(doc, 'Unit 2 — Fill in the Missing Kana', bg=NAVY)
@@ -617,9 +622,9 @@ def build_page1(doc, config):
                 add_run(p, val, size=8, color=DARK)
 
 
-def build_page2(doc, config):
+def build_page3(doc, config):
     page_break(doc)
-    add_page_label(doc, 'Reference & Answer Key  ·  Page 2 of 2')
+    add_page_label(doc, 'Reference & Answer Key  ·  Page 3 of 3')
     section_banner(doc, 'Reference & Answer Key', bg=DARK)
 
     intro = doc.add_paragraph()
@@ -807,6 +812,7 @@ def build_doc(config):
     add_corner_watermark(doc)
     build_page1(doc, config)
     build_page2(doc, config)
+    build_page3(doc, config)
     return doc
 
 
