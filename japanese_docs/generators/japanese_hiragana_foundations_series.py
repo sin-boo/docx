@@ -356,6 +356,19 @@ def get_odd_one_out_prompts(config):
     ]
 
 
+def get_true_false_prompts(config):
+    sounds = [sound for _kana, sound, _tip in config['kana']]
+    if len(config['kana']) >= 5:
+        return [
+            (f"This set follows the sound order {', '.join(sounds)}.", 'True'),
+            ('This set has only three kana.', 'False'),
+        ]
+    return [
+        (f"This set has {len(config['kana'])} kana.", 'True'),
+        ('This set uses all five vowel positions.', 'False'),
+    ]
+
+
 def get_example_source(config):
     current_idx = WORKSHEETS.index(config)
     source_idx = 2 if current_idx != 2 else 1
@@ -424,17 +437,15 @@ def build_page1(doc, config):
 
     heading(doc, 'How this set works')
     for tip in [
-        f"This worksheet focuses on the set: {config['subtitle']}.",
-        "Each hiragana letter stands for one sound chunk or beat.",
-        config['focus'],
+        f"Set: {config['subtitle']}. {config['focus']}",
         f"{get_row_pattern_note(config)} {get_special_sound_note(config)}",
-        "You will do two activities: write the reading from memory, then use row-pattern practice to check if you really know the set.",
+        "Parts: write the reading, fill a pattern, find the odd one out, and answer true or false.",
     ]:
         p = doc.add_paragraph(style='List Bullet')
         p.paragraph_format.left_indent = Cm(0.6)
         p.paragraph_format.space_before = Pt(0)
         p.paragraph_format.space_after = Pt(0)
-        add_run(p, tip, size=9)
+        add_run(p, tip, size=8)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(0)
     section_banner(doc, 'Worked Examples', bg=GOLD)
@@ -442,42 +453,36 @@ def build_page1(doc, config):
     example_note = doc.add_paragraph()
     example_note.paragraph_format.space_before = Pt(0)
     example_note.paragraph_format.space_after = Pt(1)
-    add_run(example_note, 'These examples show the ', size=10, color=DARK)
-    add_run(example_note, 'format only', bold=True, size=10, color=TEAL)
-    add_run(example_note, '. They are ', size=10, color=DARK)
-    add_run(example_note, 'not', bold=True, size=10, color=NAVY)
-    add_run(example_note, ' answers to the real questions below.', size=10, color=DARK)
+    add_run(example_note, 'Format only example from another row: ', size=9, color=DARK)
+    add_run(example_note, f"{get_example_source(config)['kana'][0][0]} = {get_example_source(config)['kana'][0][1]}", bold=True, size=9, color=TEAL)
 
-    examples_tbl = doc.add_table(rows=1, cols=2)
+    examples_tbl = doc.add_table(rows=1, cols=1)
     examples_tbl.style = 'Table Grid'
     source = get_example_source(config)
-    for idx, (prompt, answer) in enumerate(get_worked_examples(config)):
-        cell = examples_tbl.rows[0].cells[idx]
-        set_cell_bg(cell, LIGHT)
-        cell.vertical_alignment = WD_ALIGN_VERTICAL.TOP
-        p = cell.paragraphs[0]
-        p.paragraph_format.space_before = Pt(1)
-        p.paragraph_format.space_after = Pt(0)
-        add_run(p, 'Example', bold=True, size=8, color=TEAL)
-        p2 = cell.add_paragraph()
-        p2.paragraph_format.space_before = Pt(0)
-        p2.paragraph_format.space_after = Pt(0)
-        add_run(p2, prompt, bold=True, size=10, color=NAVY)
-        p3 = cell.add_paragraph()
-        p3.paragraph_format.space_before = Pt(0)
-        p3.paragraph_format.space_after = Pt(1)
-        add_run(p3, f'Answer: {answer}', size=8, color=DARK)
+    prompt, answer = get_worked_examples(config)[1]
+    cell = examples_tbl.rows[0].cells[0]
+    set_cell_bg(cell, LIGHT)
+    cell.vertical_alignment = WD_ALIGN_VERTICAL.TOP
+    p = cell.paragraphs[0]
+    p.paragraph_format.space_before = Pt(1)
+    p.paragraph_format.space_after = Pt(0)
+    add_run(p, 'Pattern example', bold=True, size=8, color=TEAL)
+    p2 = cell.add_paragraph()
+    p2.paragraph_format.space_before = Pt(0)
+    p2.paragraph_format.space_after = Pt(0)
+    add_run(p2, prompt, bold=True, size=9, color=NAVY)
+    p3 = cell.add_paragraph()
+    p3.paragraph_format.space_before = Pt(0)
+    p3.paragraph_format.space_after = Pt(1)
+    add_run(p3, f'Answer: {answer}', size=8, color=DARK)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(0)
-    section_banner(doc, 'Activity 1 — Write the Reading', bg=TEAL)
+    section_banner(doc, 'Unit 1 — Write the Reading', bg=TEAL)
 
     act1_intro = doc.add_paragraph()
     act1_intro.paragraph_format.space_before = Pt(0)
     act1_intro.paragraph_format.space_after = Pt(1)
-    add_run(act1_intro, 'Look at each kana and ', size=10, color=DARK)
-    add_run(act1_intro, 'write its reading in romaji', bold=True, size=9, color=TEAL)
-    add_run(act1_intro, '. Example from another row: ', size=9, color=DARK)
-    add_run(act1_intro, f"{source['kana'][0][0]} = {source['kana'][0][1]}.", italic=True, size=9, color=GREY)
+    add_run(act1_intro, 'Write the romaji reading for each kana.', size=8, color=DARK)
 
     reading_tbl = doc.add_table(rows=len(config['kana']) + 1, cols=3)
     reading_tbl.style = 'Table Grid'
@@ -489,7 +494,7 @@ def build_page1(doc, config):
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.paragraph_format.space_before = Pt(1)
         p.paragraph_format.space_after = Pt(1)
-        add_run(p, label, bold=True, size=9, color=WHITE)
+        add_run(p, label, bold=True, size=8, color=WHITE)
 
     for idx, (kana, _sound, _tip) in enumerate(config['kana'], 1):
         row = reading_tbl.rows[idx]
@@ -507,19 +512,15 @@ def build_page1(doc, config):
             p.paragraph_format.space_before = Pt(1)
             p.paragraph_format.space_after = Pt(1)
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            add_run(p, val, bold=bld, size=(9 if ci != 1 else 13), color=clr)
+            add_run(p, val, bold=bld, size=(8 if ci != 1 else 12), color=clr)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(0)
-    section_banner(doc, 'Activity 2 — Pattern Practice', bg=NAVY)
+    section_banner(doc, 'Unit 2 — Fill in the Missing Kana', bg=NAVY)
 
     act2_intro = doc.add_paragraph()
     act2_intro.paragraph_format.space_before = Pt(0)
     act2_intro.paragraph_format.space_after = Pt(1)
-    add_run(act2_intro, 'Use the row pattern to help you. ', size=10, color=DARK)
-    add_run(act2_intro, 'Fill in the missing kana', bold=True, size=9, color=TEAL)
-    add_run(act2_intro, ' and ', size=10, color=DARK)
-    add_run(act2_intro, 'circle the one that does not belong', bold=True, size=9, color=NAVY)
-    add_run(act2_intro, '.', size=10, color=DARK)
+    add_run(act2_intro, 'Fill in the missing kana to complete the row.', size=8, color=DARK)
 
     fill_tbl = doc.add_table(rows=len(get_fill_in_prompts(config)) + 1, cols=2)
     fill_tbl.style = 'Table Grid'
@@ -531,7 +532,7 @@ def build_page1(doc, config):
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.paragraph_format.space_before = Pt(1)
         p.paragraph_format.space_after = Pt(1)
-        add_run(p, label, bold=True, size=9, color=WHITE)
+        add_run(p, label, bold=True, size=8, color=WHITE)
 
     for idx, (prompt, _answer) in enumerate(get_fill_in_prompts(config), 1):
         row = fill_tbl.rows[idx]
@@ -544,7 +545,15 @@ def build_page1(doc, config):
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
             p.paragraph_format.space_before = Pt(1)
             p.paragraph_format.space_after = Pt(1)
-            add_run(p, val, size=9 if ci == 1 else 11, color=DARK if ci == 1 else NAVY, bold=(ci == 0))
+            add_run(p, val, size=8 if ci == 1 else 10, color=DARK if ci == 1 else NAVY, bold=(ci == 0))
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(0)
+    section_banner(doc, 'Unit 3 — Find the Odd One Out', bg=TEAL)
+
+    odd_intro = doc.add_paragraph()
+    odd_intro.paragraph_format.space_before = Pt(0)
+    odd_intro.paragraph_format.space_after = Pt(1)
+    add_run(odd_intro, 'Write the one kana that does not belong.', size=8, color=DARK)
 
     odd_tbl = doc.add_table(rows=len(get_odd_one_out_prompts(config)) + 1, cols=2)
     odd_tbl.style = 'Table Grid'
@@ -556,7 +565,7 @@ def build_page1(doc, config):
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.paragraph_format.space_before = Pt(1)
         p.paragraph_format.space_after = Pt(1)
-        add_run(p, label, bold=True, size=9, color=WHITE)
+        add_run(p, label, bold=True, size=8, color=WHITE)
 
     for idx, (prompt_items, _answer) in enumerate(get_odd_one_out_prompts(config), 1):
         row = odd_tbl.rows[idx]
@@ -569,7 +578,43 @@ def build_page1(doc, config):
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
             p.paragraph_format.space_before = Pt(1)
             p.paragraph_format.space_after = Pt(1)
-            add_run(p, val, size=9 if ci == 1 else 11, color=DARK if ci == 1 else NAVY, bold=(ci == 0))
+            add_run(p, val, size=8 if ci == 1 else 10, color=DARK if ci == 1 else NAVY, bold=(ci == 0))
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(0)
+    section_banner(doc, 'Unit 4 — True or False', bg=GOLD)
+
+    tf_intro = doc.add_paragraph()
+    tf_intro.paragraph_format.space_before = Pt(0)
+    tf_intro.paragraph_format.space_after = Pt(1)
+    add_run(tf_intro, 'Write True or False for each sentence.', size=8, color=DARK)
+
+    tf_tbl = doc.add_table(rows=len(get_true_false_prompts(config)) + 1, cols=2)
+    tf_tbl.style = 'Table Grid'
+    for ci, label in enumerate(['Statement', 'True / False']):
+        c = tf_tbl.rows[0].cells[ci]
+        set_cell_bg(c, NAVY)
+        c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+        p = c.paragraphs[0]
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(1)
+        p.paragraph_format.space_after = Pt(1)
+        add_run(p, label, bold=True, size=8, color=WHITE)
+
+    for idx, (statement, _answer) in enumerate(get_true_false_prompts(config), 1):
+        row = tf_tbl.rows[idx]
+        bg = LIGHT if idx % 2 == 1 else WHITE
+        for ci, val in enumerate([statement, '________']):
+            c = row.cells[ci]
+            set_cell_bg(c, bg)
+            c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            p = c.paragraphs[0]
+            p.paragraph_format.space_before = Pt(1)
+            p.paragraph_format.space_after = Pt(1)
+            if ci == 0:
+                add_run(p, val, size=7, color=DARK)
+            else:
+                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                add_run(p, val, size=8, color=DARK)
 
 
 def build_page2(doc, config):
@@ -611,7 +656,7 @@ def build_page2(doc, config):
             add_run(p, val, bold=bld, size=sz, color=clr)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(0)
-    section_banner(doc, 'Activity 1 Answers', bg=TEAL)
+    section_banner(doc, 'Unit 1 Answers', bg=TEAL)
 
     answer_tbl = doc.add_table(rows=len(config['kana']) + 1, cols=2)
     answer_tbl.style = 'Table Grid'
@@ -642,7 +687,7 @@ def build_page2(doc, config):
             add_run(p, val, bold=bld, size=(9 if ci == 1 else 12), color=clr)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(0)
-    section_banner(doc, 'Activity 2 Answers', bg=NAVY)
+    section_banner(doc, 'Unit 2 Answers', bg=NAVY)
 
     fill_answer_tbl = doc.add_table(rows=len(get_fill_in_prompts(config)) + 1, cols=2)
     fill_answer_tbl.style = 'Table Grid'
@@ -672,6 +717,9 @@ def build_page2(doc, config):
             p.paragraph_format.space_after = Pt(1)
             add_run(p, val, bold=bld, size=(9 if ci == 1 else 10), color=clr)
 
+    doc.add_paragraph().paragraph_format.space_after = Pt(0)
+    section_banner(doc, 'Unit 3 Answers', bg=TEAL)
+
     odd_answer_tbl = doc.add_table(rows=len(get_odd_one_out_prompts(config)) + 1, cols=2)
     odd_answer_tbl.style = 'Table Grid'
     for ci, label in enumerate(['Circle the kana that does not belong', 'Answer']):
@@ -699,6 +747,37 @@ def build_page2(doc, config):
             p.paragraph_format.space_before = Pt(1)
             p.paragraph_format.space_after = Pt(1)
             add_run(p, val, bold=bld, size=(9 if ci == 1 else 10), color=clr)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(0)
+    section_banner(doc, 'Unit 4 Answers', bg=GOLD)
+
+    tf_answer_tbl = doc.add_table(rows=len(get_true_false_prompts(config)) + 1, cols=2)
+    tf_answer_tbl.style = 'Table Grid'
+    for ci, label in enumerate(['Statement', 'Answer']):
+        c = tf_answer_tbl.rows[0].cells[ci]
+        set_cell_bg(c, NAVY)
+        c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+        p = c.paragraphs[0]
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(1)
+        p.paragraph_format.space_after = Pt(1)
+        add_run(p, label, bold=True, size=9, color=WHITE)
+
+    for idx, (statement, answer) in enumerate(get_true_false_prompts(config), 1):
+        row = tf_answer_tbl.rows[idx]
+        bg = LIGHT if idx % 2 == 1 else WHITE
+        for ci, val in enumerate([statement, answer]):
+            c = row.cells[ci]
+            set_cell_bg(c, bg)
+            c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            p = c.paragraphs[0]
+            p.paragraph_format.space_before = Pt(1)
+            p.paragraph_format.space_after = Pt(1)
+            if ci == 1:
+                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                add_run(p, val, bold=True, size=9, color=TEAL)
+            else:
+                add_run(p, val, size=8, color=DARK)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(0)
     heading(doc, 'Quick review', level=2)
