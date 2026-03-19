@@ -312,9 +312,11 @@ def get_fill_in_prompts(config):
     if len(kana) >= 5:
         return [
             (f"{kana[0]}  __  {kana[2]}  __  {kana[4]}", f"{kana[1]}, {kana[3]}"),
+            (f"__  {kana[1]}  __  {kana[3]}  __", f"{kana[0]}, {kana[2]}, {kana[4]}"),
         ]
     return [
         (f"{kana[0]}  __  {kana[2]}", kana[1]),
+        (f"__  {kana[1]}  __", f"{kana[0]}, {kana[2]}"),
     ]
 
 
@@ -349,10 +351,12 @@ def get_odd_one_out_prompts(config):
         return [
             ([distractors[0], kana[0], kana[1], kana[2]], distractors[0]),
             ([kana[1], distractors[1], kana[2], kana[3]], distractors[1]),
+            ([kana[2], kana[3], distractors[2], kana[4]], distractors[2]),
         ]
     return [
         ([distractors[0], kana[0], kana[1], kana[2]], distractors[0]),
         ([kana[0], distractors[1], kana[1], kana[2]], distractors[1]),
+        ([kana[0], kana[1], distractors[2], kana[2]], distractors[2]),
     ]
 
 
@@ -362,10 +366,12 @@ def get_true_false_prompts(config):
         return [
             (f"This set follows the sound order {', '.join(sounds)}.", 'True'),
             ('This set has only three kana.', 'False'),
+            (f"The last sound in this set is {sounds[-1]}.", 'True'),
         ]
     return [
         (f"This set has {len(config['kana'])} kana.", 'True'),
         ('This set uses all five vowel positions.', 'False'),
+        (f"The first sound in this set is {sounds[0]}.", 'True'),
     ]
 
 
@@ -525,7 +531,8 @@ def build_page2(doc, config):
     act2_intro = doc.add_paragraph()
     act2_intro.paragraph_format.space_before = Pt(0)
     act2_intro.paragraph_format.space_after = Pt(1)
-    add_run(act2_intro, 'Fill in the missing kana to complete the row.', size=8, color=DARK)
+    add_run(act2_intro, 'Fill in the missing kana to complete each pattern. ', size=8, color=DARK)
+    add_run(act2_intro, 'Use the row order to help you.', bold=True, size=8, color=TEAL)
 
     fill_tbl = doc.add_table(rows=len(get_fill_in_prompts(config)) + 1, cols=2)
     fill_tbl.style = 'Table Grid'
@@ -558,7 +565,8 @@ def build_page2(doc, config):
     odd_intro = doc.add_paragraph()
     odd_intro.paragraph_format.space_before = Pt(0)
     odd_intro.paragraph_format.space_after = Pt(1)
-    add_run(odd_intro, 'Write the one kana that does not belong.', size=8, color=DARK)
+    add_run(odd_intro, 'Most kana in each line belong to this set. ', size=8, color=DARK)
+    add_run(odd_intro, 'Write the one kana that does not belong.', bold=True, size=8, color=NAVY)
 
     odd_tbl = doc.add_table(rows=len(get_odd_one_out_prompts(config)) + 1, cols=2)
     odd_tbl.style = 'Table Grid'
@@ -591,7 +599,11 @@ def build_page2(doc, config):
     tf_intro = doc.add_paragraph()
     tf_intro.paragraph_format.space_before = Pt(0)
     tf_intro.paragraph_format.space_after = Pt(1)
-    add_run(tf_intro, 'Write True or False for each sentence.', size=8, color=DARK)
+    add_run(tf_intro, 'Read each sentence about the set and write ', size=8, color=DARK)
+    add_run(tf_intro, 'True', bold=True, size=8, color=TEAL)
+    add_run(tf_intro, ' or ', size=8, color=DARK)
+    add_run(tf_intro, 'False', bold=True, size=8, color=NAVY)
+    add_run(tf_intro, '.', size=8, color=DARK)
 
     tf_tbl = doc.add_table(rows=len(get_true_false_prompts(config)) + 1, cols=2)
     tf_tbl.style = 'Table Grid'
@@ -791,6 +803,7 @@ def build_page3(doc, config):
         'Most rows follow the vowel order a, i, u, e, o.',
         "Point to one letter at a time and say the full sound in one step.",
         config['teaching_notes'][0],
+        f"Set order: {', '.join(kana for kana, _sound, _tip in config['kana'])} | Sound order: {', '.join(sound for _kana, sound, _tip in config['kana'])}",
     ]
     for tip in quick_notes:
         p = doc.add_paragraph()
@@ -799,30 +812,6 @@ def build_page3(doc, config):
         p.paragraph_format.space_after = Pt(0)
         add_run(p, '▸ ', bold=True, size=9, color=GOLD)
         add_run(p, tip, size=9, color=DARK)
-
-    doc.add_paragraph().paragraph_format.space_after = Pt(0)
-    heading(doc, 'Memory helper', level=2)
-    helper_tbl = doc.add_table(rows=2, cols=2)
-    helper_tbl.style = 'Table Grid'
-    helper_rows = [
-        ('Set order', ', '.join(kana for kana, _sound, _tip in config['kana'])),
-        ('Sound order', ', '.join(sound for _kana, sound, _tip in config['kana'])),
-    ]
-    for row_idx, (label, value) in enumerate(helper_rows):
-        row = helper_tbl.rows[row_idx]
-        for ci, (val, clr, sz, bld) in enumerate([
-            (label, TEAL, 9, True),
-            (value, DARK, 9, False),
-        ]):
-            c = row.cells[ci]
-            set_cell_bg(c, LIGHT if row_idx % 2 == 0 else WHITE)
-            c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-            p = c.paragraphs[0]
-            p.paragraph_format.space_before = Pt(1)
-            p.paragraph_format.space_after = Pt(1)
-            if ci == 1:
-                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            add_run(p, val, bold=bld, size=sz, color=clr)
 
 def build_doc(config):
     doc = Document()
