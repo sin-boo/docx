@@ -313,10 +313,12 @@ def get_fill_in_prompts(config):
         return [
             (f"{kana[0]}  __  {kana[2]}  __  {kana[4]}", f"{kana[1]}, {kana[3]}"),
             (f"__  {kana[1]}  __  {kana[3]}  __", f"{kana[0]}, {kana[2]}, {kana[4]}"),
+            (f"{kana[4]}  __  {kana[2]}  __  {kana[0]}", f"{kana[3]}, {kana[1]}"),
         ]
     return [
         (f"{kana[0]}  __  {kana[2]}", kana[1]),
         (f"__  {kana[1]}  __", f"{kana[0]}, {kana[2]}"),
+        (f"{kana[2]}  __  {kana[0]}", kana[1]),
     ]
 
 
@@ -352,6 +354,7 @@ def get_odd_one_out_prompts(config):
             ([distractors[0], kana[0], kana[1], kana[2]], distractors[0]),
             ([kana[1], distractors[1], kana[2], kana[3]], distractors[1]),
             ([kana[2], kana[3], distractors[2], kana[4]], distractors[2]),
+            ([kana[4], kana[0], distractors[0], kana[2]], distractors[0]),
         ]
     return [
         ([distractors[0], kana[0], kana[1], kana[2]], distractors[0]),
@@ -367,12 +370,23 @@ def get_true_false_prompts(config):
             (f"This set follows the sound order {', '.join(sounds)}.", 'True'),
             ('This set has only three kana.', 'False'),
             (f"The last sound in this set is {sounds[-1]}.", 'True'),
+            (f"The first sound in this set is {sounds[0]}.", 'True'),
         ]
     return [
         (f"This set has {len(config['kana'])} kana.", 'True'),
         ('This set uses all five vowel positions.', 'False'),
         (f"The first sound in this set is {sounds[0]}.", 'True'),
+        (f"The last sound in this set is {sounds[-1]}.", 'True'),
     ]
+
+
+def get_write_kana_prompts(config):
+    kana_items = config['kana']
+    if len(kana_items) >= 5:
+        order = [1, 3, 0, 4]
+    else:
+        order = list(range(len(kana_items)))
+    return [(kana_items[i][1], kana_items[i][0]) for i in order]
 
 
 def get_example_source(config):
@@ -520,6 +534,37 @@ def build_page1(doc, config):
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
             add_run(p, val, bold=bld, size=(8 if ci != 1 else 12), color=clr)
 
+    write_kana_intro = doc.add_paragraph()
+    write_kana_intro.paragraph_format.space_before = Pt(0)
+    write_kana_intro.paragraph_format.space_after = Pt(1)
+    add_run(write_kana_intro, 'Now do the reverse. ', size=8, color=DARK)
+    add_run(write_kana_intro, 'Write the kana that matches each sound.', bold=True, size=8, color=TEAL)
+
+    write_kana_tbl = doc.add_table(rows=len(get_write_kana_prompts(config)) + 1, cols=2)
+    write_kana_tbl.style = 'Table Grid'
+    for ci, label in enumerate(['Sound', 'Write the kana']):
+        c = write_kana_tbl.rows[0].cells[ci]
+        set_cell_bg(c, TEAL)
+        c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+        p = c.paragraphs[0]
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(1)
+        p.paragraph_format.space_after = Pt(1)
+        add_run(p, label, bold=True, size=8, color=WHITE)
+
+    for idx, (sound, _kana) in enumerate(get_write_kana_prompts(config), 1):
+        row = write_kana_tbl.rows[idx]
+        bg = LIGHT if idx % 2 == 1 else WHITE
+        for ci, val in enumerate([sound, '________']):
+            c = row.cells[ci]
+            set_cell_bg(c, bg)
+            c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            p = c.paragraphs[0]
+            p.paragraph_format.space_before = Pt(1)
+            p.paragraph_format.space_after = Pt(1)
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            add_run(p, val, bold=(ci == 0), size=8 if ci == 1 else 9, color=DARK if ci == 1 else NAVY)
+
 
 def build_page2(doc, config):
     page_break(doc)
@@ -656,12 +701,12 @@ def build_page3(doc, config):
         p.paragraph_format.space_after = Pt(1)
         add_run(p, label, bold=True, size=9, color=WHITE)
 
-    for idx, (pair, reading) in enumerate(config['pairs'], 1):
+    for idx, (pair, reading) in enumerate(config['pairs'][:2], 1):
         bg = LIGHT if idx % 2 == 1 else WHITE
         row = pair_tbl.rows[idx]
         for ci, (val, clr, sz, bld) in enumerate([
-            (pair, NAVY, 12, True),
-            (reading, DARK, 9, False),
+            (pair, NAVY, 11, True),
+            (reading, DARK, 8, False),
         ]):
             c = row.cells[ci]
             set_cell_bg(c, bg)
@@ -691,8 +736,8 @@ def build_page3(doc, config):
         bg = MINT if idx % 2 == 1 else WHITE
         row = answer_tbl.rows[idx]
         for ci, (val, clr, sz, bld) in enumerate([
-            (kana, NAVY, 13, True),
-            (sound, DARK, 10, False),
+            (kana, NAVY, 12, True),
+            (sound, DARK, 8, False),
         ]):
             c = row.cells[ci]
             set_cell_bg(c, bg)
@@ -702,6 +747,32 @@ def build_page3(doc, config):
             p.paragraph_format.space_before = Pt(1)
             p.paragraph_format.space_after = Pt(1)
             add_run(p, val, bold=bld, size=(9 if ci == 1 else 12), color=clr)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(0)
+    write_answer_tbl = doc.add_table(rows=len(get_write_kana_prompts(config)) + 1, cols=2)
+    write_answer_tbl.style = 'Table Grid'
+    for ci, label in enumerate(['Sound', 'Kana']):
+        c = write_answer_tbl.rows[0].cells[ci]
+        set_cell_bg(c, LIGHT)
+        c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+        p = c.paragraphs[0]
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(1)
+        p.paragraph_format.space_after = Pt(1)
+        add_run(p, label, bold=True, size=8, color=NAVY)
+
+    for idx, (sound, kana) in enumerate(get_write_kana_prompts(config), 1):
+        row = write_answer_tbl.rows[idx]
+        bg = WHITE if idx % 2 == 1 else LIGHT
+        for ci, val in enumerate([sound, kana]):
+            c = row.cells[ci]
+            set_cell_bg(c, bg)
+            c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            p = c.paragraphs[0]
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_before = Pt(1)
+            p.paragraph_format.space_after = Pt(1)
+            add_run(p, val, bold=(ci == 1), size=8 if ci == 0 else 11, color=DARK if ci == 0 else NAVY)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(0)
     section_banner(doc, 'Unit 2 Answers', bg=NAVY)
@@ -722,8 +793,8 @@ def build_page3(doc, config):
         bg = LIGHT if idx % 2 == 1 else WHITE
         row = fill_answer_tbl.rows[idx]
         for ci, (val, clr, sz, bld) in enumerate([
-            (prompt, NAVY, 11, True),
-            (answer, DARK, 10, False),
+            (prompt, NAVY, 10, True),
+            (answer, DARK, 8, False),
         ]):
             c = row.cells[ci]
             set_cell_bg(c, bg)
@@ -753,8 +824,8 @@ def build_page3(doc, config):
         bg = MINT if idx % 2 == 1 else WHITE
         row = odd_answer_tbl.rows[idx]
         for ci, (val, clr, sz, bld) in enumerate([
-            ('   '.join(prompt_items), NAVY, 11, True),
-            (answer, DARK, 10, False),
+            ('   '.join(prompt_items), NAVY, 10, True),
+            (answer, DARK, 8, False),
         ]):
             c = row.cells[ci]
             set_cell_bg(c, bg)
@@ -792,26 +863,11 @@ def build_page3(doc, config):
             p.paragraph_format.space_after = Pt(1)
             if ci == 1:
                 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                add_run(p, val, bold=True, size=9, color=TEAL)
+                add_run(p, val, bold=True, size=8, color=TEAL)
             else:
-                add_run(p, val, size=8, color=DARK)
+                add_run(p, val, size=7, color=DARK)
 
     doc.add_paragraph().paragraph_format.space_after = Pt(0)
-    heading(doc, 'Quick review', level=2)
-    quick_notes = [
-        'One hiragana usually represents one sound beat.',
-        'Most rows follow the vowel order a, i, u, e, o.',
-        "Point to one letter at a time and say the full sound in one step.",
-        config['teaching_notes'][0],
-        f"Set order: {', '.join(kana for kana, _sound, _tip in config['kana'])} | Sound order: {', '.join(sound for _kana, sound, _tip in config['kana'])}",
-    ]
-    for tip in quick_notes:
-        p = doc.add_paragraph()
-        p.paragraph_format.left_indent = Cm(0.6)
-        p.paragraph_format.space_before = Pt(0)
-        p.paragraph_format.space_after = Pt(0)
-        add_run(p, '▸ ', bold=True, size=9, color=GOLD)
-        add_run(p, tip, size=9, color=DARK)
 
 def build_doc(config):
     doc = Document()
