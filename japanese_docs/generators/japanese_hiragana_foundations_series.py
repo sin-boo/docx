@@ -630,7 +630,7 @@ def build_page3(doc, config):
     intro = doc.add_paragraph()
     intro.paragraph_format.space_before = Pt(0)
     intro.paragraph_format.space_after = Pt(1)
-    add_run(intro, 'Use this page as a reference after students finish page 1.', size=9, color=DARK)
+    add_run(intro, 'Use this page as a reference after students finish pages 1 and 2.', size=9, color=DARK)
 
     pair_tbl = doc.add_table(rows=len(config['pairs']) + 1, cols=2)
     pair_tbl.style = 'Table Grid'
@@ -644,7 +644,7 @@ def build_page3(doc, config):
         p.paragraph_format.space_after = Pt(1)
         add_run(p, label, bold=True, size=9, color=WHITE)
 
-    for idx, (pair, reading) in enumerate(config['pairs'][:2], 1):
+    for idx, (pair, reading) in enumerate(config['pairs'], 1):
         bg = LIGHT if idx % 2 == 1 else WHITE
         row = pair_tbl.rows[idx]
         for ci, (val, clr, sz, bld) in enumerate([
@@ -800,6 +800,29 @@ def build_page3(doc, config):
         add_run(p, '▸ ', bold=True, size=9, color=GOLD)
         add_run(p, tip, size=9, color=DARK)
 
+    doc.add_paragraph().paragraph_format.space_after = Pt(0)
+    heading(doc, 'Memory helper', level=2)
+    helper_tbl = doc.add_table(rows=2, cols=2)
+    helper_tbl.style = 'Table Grid'
+    helper_rows = [
+        ('Set order', ', '.join(kana for kana, _sound, _tip in config['kana'])),
+        ('Sound order', ', '.join(sound for _kana, sound, _tip in config['kana'])),
+    ]
+    for row_idx, (label, value) in enumerate(helper_rows):
+        row = helper_tbl.rows[row_idx]
+        for ci, (val, clr, sz, bld) in enumerate([
+            (label, TEAL, 9, True),
+            (value, DARK, 9, False),
+        ]):
+            c = row.cells[ci]
+            set_cell_bg(c, LIGHT if row_idx % 2 == 0 else WHITE)
+            c.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            p = c.paragraphs[0]
+            p.paragraph_format.space_before = Pt(1)
+            p.paragraph_format.space_after = Pt(1)
+            if ci == 1:
+                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            add_run(p, val, bold=bld, size=sz, color=clr)
 
 def build_doc(config):
     doc = Document()
