@@ -1,11 +1,19 @@
 # reusre-maker
 
-Python project for generating DOCX documents. Includes Japanese worksheet generators for greetings, dialogues, and numbers.
+Python project for generating DOCX documents and matching PDF exports. Includes Japanese worksheet generators for greetings, dialogues, hiragana, and numbers.
 
 ## Setup
 
 ```bash
-pip install -r requirements.txt
+./setup.sh
+```
+
+Manual setup:
+
+```bash
+python3 -m pip install -r requirements.txt
+sudo apt-get update
+sudo apt-get install -y libreoffice-core libreoffice-writer
 ```
 
 ## Usage
@@ -25,6 +33,12 @@ pip install -r requirements.txt
 - `japanese_docs/output/pdf/hiragana_series/` — 10 early-beginner hiragana PDF worksheets
 - `japanese_docs/output/docs/legacy/` — older generated files kept for reference
 - `japanese_docs/ai_instructions.json` — project-specific editing notes
+
+## PDF generation
+
+- PDF export now requires **LibreOffice / soffice**
+- there is **no fallback PDF generator**
+- if `soffice` is missing, worksheet export fails with an explicit error
 
 ## Layout
 

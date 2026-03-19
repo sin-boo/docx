@@ -7,7 +7,7 @@ from docx.enum.table import WD_ALIGN_VERTICAL
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
-from output_utils import save_outputs
+from output_utils import save_docx_and_pdf
 
 # ── Colour palette (matches greetings worksheet) ───────────────────────────────
 NAVY  = RGBColor(0x1A, 0x3A, 0x5C)
@@ -524,7 +524,7 @@ def main():
     build_page7(doc)
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    docx_path, pdf_path = save_outputs(doc, script_dir, 'japanese_numbers_worksheet.docx')
+    docx_path, pdf_path = save_docx_and_pdf(doc, script_dir, 'japanese_numbers_worksheet.docx')
     print(f'Saved DOCX: {docx_path}')
     print(f'Saved PDF: {pdf_path}')
 

@@ -56,6 +56,6 @@
     "Keep answers array in sync with questions (same count and order).",
     "Use palette names (NAVY, TEAL, etc.) when calling helpers that take color.",
     "Do not remove or rename helper functions; only change document content and data lists.",
-    "After editing generators/japanese_greetings_worksheet.py, run it to regenerate output/docs/japanese_greetings_worksheet.docx and output/pdf/japanese_greetings_worksheet.pdf."
+    "After editing generators/japanese_greetings_worksheet.py, run it to regenerate output/docs/japanese_greetings_worksheet.docx and output/pdf/japanese_greetings_worksheet.pdf with LibreOffice/soffice."
   ]
 }

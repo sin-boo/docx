@@ -6,7 +6,7 @@ from docx.enum.table import WD_ALIGN_VERTICAL
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
-from output_utils import save_outputs
+from output_utils import save_docx_and_pdf
 
 # ── Colour palette ─────────────────────────────────────────────────────────────
 NAVY  = RGBColor(0x1A, 0x3A, 0x5C)
@@ -768,7 +768,7 @@ def main():
 
     for config in WORKSHEETS:
         doc = build_doc(config)
-        docx_path, pdf_path = save_outputs(doc, script_dir, config['slug'], subdir='hiragana_series')
+        docx_path, pdf_path = save_docx_and_pdf(doc, script_dir, config['slug'], subdir='hiragana_series')
         print(f'Saved DOCX: {docx_path}')
         print(f'Saved PDF: {pdf_path}')
 

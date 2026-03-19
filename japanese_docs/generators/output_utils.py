@@ -1,125 +1,17 @@
 import os
-from xml.sax.saxutils import escape
-
-from docx.document import Document as _Document
-from docx.oxml.table import CT_Tbl
-from docx.oxml.text.paragraph import CT_P
-from docx.table import Table, _Cell
-from docx.text.paragraph import Paragraph
-
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-from reportlab.lib.units import inch
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.cidfonts import UnicodeCIDFont
-from reportlab.platypus import Paragraph as PdfParagraph
-from reportlab.platypus import SimpleDocTemplate, Spacer, Table as PdfTable, TableStyle
+import shutil
+import subprocess
 
 
-PDF_FONT_NAME = 'HeiseiKakuGo-W5'
-
-
-def ensure_pdf_fonts():
-    try:
-        pdfmetrics.getFont(PDF_FONT_NAME)
-    except KeyError:
-        pdfmetrics.registerFont(UnicodeCIDFont(PDF_FONT_NAME))
-
-
-def iter_block_items(parent):
-    if isinstance(parent, _Document):
-        parent_elm = parent.element.body
-    elif isinstance(parent, _Cell):
-        parent_elm = parent._tc
-    else:
-        raise ValueError(f'Unsupported parent type: {type(parent)}')
-
-    for child in parent_elm.iterchildren():
-        if isinstance(child, CT_P):
-            yield Paragraph(child, parent)
-        elif isinstance(child, CT_Tbl):
-            yield Table(child, parent)
-
-
-def _cell_text(cell):
-    parts = [p.text.strip() for p in cell.paragraphs if p.text.strip()]
-    return '<br/>'.join(escape(part) for part in parts) if parts else ' '
-
-
-def _doc_to_story(doc):
-    ensure_pdf_fonts()
-    styles = getSampleStyleSheet()
-    body_style = ParagraphStyle(
-        'WorksheetBody',
-        parent=styles['BodyText'],
-        fontName=PDF_FONT_NAME,
-        fontSize=9,
-        leading=11,
-        spaceAfter=4,
+def require_soffice():
+    for name in ('soffice', 'libreoffice'):
+        path = shutil.which(name)
+        if path:
+            return path
+    raise RuntimeError(
+        'LibreOffice is required for PDF export. Install it and make sure '
+        '"soffice" is available on PATH.'
     )
-    table_cell_style = ParagraphStyle(
-        'WorksheetCell',
-        parent=body_style,
-        fontName=PDF_FONT_NAME,
-        fontSize=8,
-        leading=10,
-        spaceAfter=0,
-    )
-    story = []
-
-    for block in iter_block_items(doc):
-        if isinstance(block, Paragraph):
-            text = block.text.strip()
-            if text:
-                story.append(PdfParagraph(escape(text).replace('\n', '<br/>'), body_style))
-                story.append(Spacer(1, 0.04 * inch))
-        elif isinstance(block, Table):
-            data = []
-            for row in block.rows:
-                data.append([PdfParagraph(_cell_text(cell), table_cell_style) for cell in row.cells])
-
-            if not data:
-                continue
-
-            pdf_table = PdfTable(data, repeatRows=1)
-            style_cmds = [
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                ('LEFTPADDING', (0, 0), (-1, -1), 4),
-                ('RIGHTPADDING', (0, 0), (-1, -1), 4),
-                ('TOPPADDING', (0, 0), (-1, -1), 3),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#DDEAF2')),
-            ]
-            pdf_table.setStyle(TableStyle(style_cmds))
-            story.append(pdf_table)
-            story.append(Spacer(1, 0.08 * inch))
-
-    return story
-
-
-def _draw_footer(canvas, _doc):
-    ensure_pdf_fonts()
-    canvas.saveState()
-    canvas.setFont(PDF_FONT_NAME, 7)
-    canvas.setFillColor(colors.HexColor('#6B7B8D'))
-    canvas.drawRightString(7.85 * inch, 0.22 * inch, 'neuralforge.cc')
-    canvas.restoreState()
-
-
-def export_pdf(doc, pdf_path):
-    os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
-    pdf = SimpleDocTemplate(
-        pdf_path,
-        pagesize=letter,
-        leftMargin=0.35 * inch,
-        rightMargin=0.35 * inch,
-        topMargin=0.35 * inch,
-        bottomMargin=0.45 * inch,
-    )
-    story = _doc_to_story(doc)
-    pdf.build(story, onFirstPage=_draw_footer, onLaterPages=_draw_footer)
 
 
 def get_output_paths(script_dir, filename, subdir=None):
@@ -139,8 +31,39 @@ def get_output_paths(script_dir, filename, subdir=None):
     return docx_path, pdf_path
 
 
-def save_outputs(doc, script_dir, filename, subdir=None):
+def convert_docx_to_pdf(docx_path, pdf_path):
+    soffice = require_soffice()
+    pdf_dir = os.path.dirname(pdf_path)
+    cmd = [
+        soffice,
+        '--headless',
+        '--convert-to',
+        'pdf:writer_pdf_Export',
+        '--outdir',
+        pdf_dir,
+        docx_path,
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(
+            f'LibreOffice PDF conversion failed for {docx_path}\n'
+            f'stdout:\n{result.stdout}\n\nstderr:\n{result.stderr}'
+        )
+
+    generated_pdf = os.path.join(
+        pdf_dir,
+        os.path.splitext(os.path.basename(docx_path))[0] + '.pdf',
+    )
+    if not os.path.exists(generated_pdf):
+        raise RuntimeError(
+            f'LibreOffice reported success but no PDF was created for {docx_path}.'
+        )
+    if os.path.abspath(generated_pdf) != os.path.abspath(pdf_path):
+        os.replace(generated_pdf, pdf_path)
+
+
+def save_docx_and_pdf(doc, script_dir, filename, subdir=None):
     docx_path, pdf_path = get_output_paths(script_dir, filename, subdir=subdir)
     doc.save(docx_path)
-    export_pdf(doc, pdf_path)
+    convert_docx_to_pdf(docx_path, pdf_path)
     return docx_path, pdf_path
